@@ -247,35 +247,35 @@
         }
 
         function printProtocol() {
-            const checked = (pre) => Array.from(document.querySelectorAll(`input[id^="${pre}"]:checked`))
-                .map(c => c.parentElement.textContent.trim()).join(', ') || '–';
+    const checked = (pre) => Array.from(document.querySelectorAll(`input[id^="${pre}"]:checked`))
+        .map(c => c.parentElement.textContent.trim()).join(', ') || '–';
 
-            const printContent = `
-            <div class="print-area">
-                <h1>Beobachtungsprotokoll – verhaltensauffälliger Schüler</h1>
-                <p><strong>Klasse:</strong> ${document.getElementById('klasse').value || '–'}  <strong>Fach/Situation:</strong> ${document.getElementById('fach').value || '–'}</p>
-                <p><strong>Datum:</strong> ${document.getElementById('datum').value || '–'}  <strong>Uhrzeit:</strong> ${document.getElementById('uhrzeit').value || '–'}</p>
-                <p><strong>Lehrkraft:</strong> ${document.getElementById('lehrkraft').value || '–'}  <strong>Schüler:</strong> ${document.getElementById('schueler').value || '–'}</p>
-                
-                <h2>2. Beobachtetes Verhalten</h2><p>${document.getElementById('verhalten').value || '–'}</p>
-                <h2>3. Art des Vorfalls</h2><p>${checked('art')}</p>
-                <h2>4. Intensität des Verhaltens</h2><p>${checked('int')}</p>
-                <h2>5. Gefühlslage</h2><p>${checked('gef')}${document.getElementById('gefAnderes').value ? ` – Anderes: ${document.getElementById('gefAnderes').value}` : ''}</p>
-                <h2>7. Wiederholungsgefahr</h2><p>${checked('w')}</p>
-                <h2>8. Maßnahmen der Lehrkraft</h2><p>${checked('mass')}</p>
-                <p><strong>Beschreibung:</strong> ${document.getElementById('massBeschreibung').value || '–'}</p>
-                <h2>9. Wirkung der Maßnahme</h2><p>${checked('wir')}</p>
-                <h2>10. Rolle des Schulbegleiters</h2>
-                <p><strong>Position:</strong> ${checked('pos')}</p>
-                <p><strong>Handeln:</strong> ${checked('hand')}</p>
-            </div>`;
+    const printContent = `
+    <div style="padding:20px 30px; font-family:Arial,sans-serif; max-width:800px; margin:auto;">
+        <h1 style="text-align:center;">Beobachtungsprotokoll – verhaltensauffälliger Schüler</h1>
+        <p><strong>Klasse:</strong> ${document.getElementById('klasse').value || '–'}  <strong>Fach/Situation:</strong> ${document.getElementById('fach').value || '–'}</p>
+        <p><strong>Datum:</strong> ${document.getElementById('datum').value || '–'}  <strong>Uhrzeit:</strong> ${document.getElementById('uhrzeit').value || '–'}</p>
+        <p><strong>Lehrkraft:</strong> ${document.getElementById('lehrkraft').value || '–'}  <strong>Schüler:</strong> ${document.getElementById('schueler').value || '–'}</p>
+        
+        <h2>2. Beobachtetes Verhalten</h2><p>${document.getElementById('verhalten').value || '–'}</p>
+        <h2>3. Art des Vorfalls</h2><p>${checked('art')}</p>
+        <h2>4. Intensität</h2><p>${checked('int')}</p>
+        <h2>5. Gefühlslage</h2><p>${checked('gef')}${document.getElementById('gefAnderes').value ? ` – Anderes: ${document.getElementById('gefAnderes').value}` : ''}</p>
+        <h2>7. Wiederholungsgefahr</h2><p>${checked('w')}</p>
+        <h2>8. Maßnahmen</h2><p>${checked('mass')}</p>
+        <p><strong>Beschreibung:</strong> ${document.getElementById('massBeschreibung').value || '–'}</p>
+        <h2>9. Wirkung</h2><p>${checked('wir')}</p>
+        <h2>10. Schulbegleiter</h2>
+        <p><strong>Position:</strong> ${checked('pos')}</p>
+        <p><strong>Handeln:</strong> ${checked('hand')}</p>
+    </div>`;
 
-            const original = document.body.innerHTML;
-            document.body.innerHTML = printContent;
-            window.print();
-            document.body.innerHTML = original;
-            setTimeout(renderSavedList, 100);
-        }
+    const original = document.body.innerHTML;
+    document.body.innerHTML = printContent;
+    window.print();
+    document.body.innerHTML = original;
+    setTimeout(() => location.reload(), 500); // Formular wiederherstellen
+}
 
         window.onload = renderSavedList;
     </script>
