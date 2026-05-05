@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beobachtungsprotokoll</title>
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Beobachtungsprotokoll%22,%22short_name%22:%22Protokoll%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%231f2937%22,%22theme_color%22:%22%233b82f6%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E📋%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        :root { --primary: #3b82f6; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; margin: 0; padding: 0; }
+        header { background: var(--primary); color: white; padding: 1.2rem; text-align: center; position: sticky; top: 0; z-index: 10; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 2.8rem; margin-bottom: 2.5rem; }
+        
+        .general { display: flex; flex-direction: column; gap: 2.8rem; }
+        .general-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+        @media (max-width: 700px) { .general-row { grid-template-columns: 1fr; gap: 1.8rem; } }
+        
+        label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 1.05rem; }
+        input[type="text"], input[type="date"], input[type="time"] { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1.1rem; }
+        textarea { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; resize: vertical; min-height: 130px; font-size: 1.1rem; }
+
+        h2 { margin-top: 2.8rem !important; margin-bottom: 1.2rem !important; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 16px 32px; margin-top: 12px; }
+        .checkbox-group label { display: flex; align-items: center; gap: 9px; font-size: 1.05rem; }
+        input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--primary); }
+
+        button { background: var(--primary); color: white; border: none; padding: 14px 28px; border-radius: 10px; font-size: 1.1rem; cursor: pointer; margin-top: 2rem; }
+        .print-btn { background: #10b981; }
+
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { 
+                position: absolute; left: 0; top: 0; width: 100%; 
+                padding: 15px 25px; font-size: 9.1pt; line-height: 1.17; box-sizing: border-box;
+            }
+            h1 { font-size: 13.5pt; text-align: center; margin-bottom: 8pt; }
+            h2 { font-size: 10.3pt; margin: 8pt 0 3pt 0 !important; font-weight: 600; }
+            p { margin: 2pt 0 5pt 0 !important; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📋 Beobachtungsprotokoll</h1>
+        <p>verhaltensauffälliger Schüler</p>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <form id="protocolForm">
+                <h2>1. Allgemeine Angaben</h2>
+                <div class="general">
+                    <div class="general-row">
+                        <div><label>Klasse</label><input type="text" id="klasse" placeholder="z. B. 7b" required></div>
+                        <div><label>Fach / Situation</label><input type="text" id="fach" placeholder="z. B. Mathe, Pause" required></div>
+                    </div>
+                    <div class="general-row">
+                        <div><label>Datum</label><input type="date" id="datum" required></div>
+                        <div><label>Uhrzeit</label><input type="time" id="uhrzeit" required></div>
+                    </div>
+                    <div class="general-row">
+                        <div><label>Lehrkraft</label><input type="text" id="lehrkraft" required></div>
+                        <div><label>Schüler</label><input type="text" id="schueler" required></div>
+                    </div>
+                </div>
+
+                <h2>2. Beobachtetes Verhalten (kurz & konkret)</h2>
+                <textarea id="verhalten" placeholder="Stichwortartig, max. 2–3 Sätze" rows="4"></textarea>
+
+                <h2>3. Art des Vorfalls</h2>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="art1"> Körperverletzung / Androhung Körperverletzung</label>
+                    <label><input type="checkbox" id="art2"> schwere Sachbeschädigung</label>
+                    <label><input type="checkbox" id="art3"> Erpressung</label>
+                    <label><input type="checkbox" id="art4"> Tötung: Androhung</label>
+                    <label><input type="checkbox" id="art5"> wiederholte persönliche Diffamierung</label>
+                    <label><input type="checkbox" id="art6"> mutmaßlich extremistischer Hintergrund</label>
+                </div>
+
+                <h2>4. Intensität des Verhaltens</h2>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="int1"> gering</label>
+                    <label><input type="checkbox" id="int2"> mittel</label>
+                    <label><input type="checkbox" id="int3"> hoch</label>
+                    <label><input type="checkbox" id="int4"> akut gefährdend</label>
+                </div>
+
+                <h2>5. Wahrgenommene Gefühlslage des Schülers (Mehrfachnennung möglich)</h2>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="gef1"> wütend</label>
+                    <label><input type="checkbox" id="gef2"> unsicher / ängstlich</label>
+                    <label><input type="checkbox" id="gef3"> überlegen / mächtig</label>
+                    <label><input type="checkbox" id="gef4"> gleichgültig</label>
+                    <label><input type="checkbox" id="gef5"> erfreut / erleichtert</label>
+                    <label><input type="checkbox" id="gef6"> aufmerksamkeitsorientiert</label>
+                    <label><input type="checkbox" id="gef7"> beschämt</label>
+                    <label><input type="checkbox" id="gef8"> nicht erkennbar</label>
+                    <label>andere: <input type="text" id="gefAnderes" style="width:240px;border:none;border-bottom:1px solid #ccc;background:transparent;font-size:1.05rem;"></label>
+                </div>
+
+                <h2>7. Einschätzung Wiederholungsgefahr</h2>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="w1"> ja</label>
+                    <label><input type="checkbox" id="w2"> eher ja</label>
+                    <label><input type="checkbox" id="w3"> unsicher</label>
+                    <label><input type="checkbox" id="w4"> eher nein</label>
+                    <label><input type="checkbox" id="w5"> nein</label>
+                    <label><input type="checkbox" id="w6"> nicht bekannt</label>
+                </div>
+
+                <h2>8. Maßnahmen der Lehrkraft</h2>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="mass1"> Ermahnung</label>
+                    <label><input type="checkbox" id="mass2"> Gespräch (Einzel)</label>
+                    <label><input type="checkbox" id="mass3"> Gespräch (Gruppe)</label>
+                    <label><input type="checkbox" id="mass4"> Auszeit / Raumwechsel</label>
+                    <label><input type="checkbox" id="mass5"> Elternkontakt</label>
+                    <label><input type="checkbox" id="mass6"> Schulleitung informiert</label>
+                    <label><input type="checkbox" id="mass7"> Schulsozialarbeit einbezogen</label>
+                    <label><input type="checkbox" id="mass8"> Ordnungsmaßnahme</label>
+                    <label><input type="checkbox" id="mass9"> Notfallmaßnahmen eingeleitet</label>
+                </div>
+                <label style="margin-top:1rem;">Kurzbeschreibung der Maßnahmen (optional)</label>
+                <textarea id="massBeschreibung" rows="3"></textarea>
+
+                <h2>9. Wirkung der Maßnahme</h2>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="wir1"> Verhalten verbessert</label>
+                    <label><input type="checkbox" id="wir2"> kurzfristige Beruhigung</label>
+                    <label><input type="checkbox" id="wir3"> keine Veränderung</label>
+                    <label><input type="checkbox" id="wir4"> Eskalation</label>
+                    <label><input type="checkbox" id="wir5"> nicht beurteilbar</label>
+                </div>
+
+                <h2>10. Rolle des Schulbegleiters</h2>
+                <strong>Position:</strong>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="pos1"> direkt beim Schüler</label>
+                    <label><input type="checkbox" id="pos2"> im Raum, aber auf Distanz</label>
+                    <label><input type="checkbox" id="pos3"> außerhalb des Raums</label>
+                    <label><input type="checkbox" id="pos4"> nicht anwesend</label>
+                </div>
+                <strong style="margin-top:1rem;display:block;">Handeln:</strong>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="hand1"> beobachtend</label>
+                    <label><input type="checkbox" id="hand2"> deeskalierend</label>
+                    <label><input type="checkbox" id="hand3"> aktiv eingreifend</label>
+                    <label><input type="checkbox" id="hand4"> unterstützend für Lehrkraft</label>
+                    <label><input type="checkbox" id="hand5"> keine erkennbare Handlung</label>
+                </div>
+
+                <div style="margin-top:2.5rem;display:flex;gap:1rem;flex-wrap:wrap;">
+                    <button type="button" onclick="saveProtocol()">💾 Protokoll speichern</button>
+                    <button type="button" onclick="printProtocol()" class="print-btn">🖨️ Drucken / PDF</button>
+                    <button type="button" onclick="resetForm()" style="background:#64748b;">🔄 Neues Protokoll</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Gespeicherte Protokolle <span id="count" style="font-size:1rem;color:#64748b;"></span></h2>
+            <div id="savedEntries"></div>
+        </div>
+    </div>
+
+    <script>
+        let protocols = JSON.parse(localStorage.getItem('beobachtungsprotokolle')) || [];
+
+        function getCheckedIds(prefix) {
+            return Array.from(document.querySelectorAll(`input[id^="${prefix}"]:checked`)).map(cb => cb.id);
+        }
+
+        function saveProtocol() {
+            const data = {
+                id: Date.now(),
+                datum: document.getElementById('datum').value,
+                uhrzeit: document.getElementById('uhrzeit').value,
+                klasse: document.getElementById('klasse').value,
+                fach: document.getElementById('fach').value,
+                lehrkraft: document.getElementById('lehrkraft').value,
+                schueler: document.getElementById('schueler').value,
+                verhalten: document.getElementById('verhalten').value,
+                massBeschreibung: document.getElementById('massBeschreibung').value,
+                gefAnderes: document.getElementById('gefAnderes').value,
+                art: getCheckedIds('art'), int: getCheckedIds('int'), gef: getCheckedIds('gef'),
+                w: getCheckedIds('w'), mass: getCheckedIds('mass'), wir: getCheckedIds('wir'),
+                pos: getCheckedIds('pos'), hand: getCheckedIds('hand')
+            };
+            protocols.unshift(data);
+            localStorage.setItem('beobachtungsprotokolle', JSON.stringify(protocols));
+            renderSavedList();
+            alert('✅ Protokoll gespeichert!');
+        }
+
+        function loadProtocol(index) {
+            const p = protocols[index];
+            document.getElementById('datum').value = p.datum || '';
+            document.getElementById('uhrzeit').value = p.uhrzeit || '';
+            document.getElementById('klasse').value = p.klasse || '';
+            document.getElementById('fach').value = p.fach || '';
+            document.getElementById('lehrkraft').value = p.lehrkraft || '';
+            document.getElementById('schueler').value = p.schueler || '';
+            document.getElementById('verhalten').value = p.verhalten || '';
+            document.getElementById('massBeschreibung').value = p.massBeschreibung || '';
+            document.getElementById('gefAnderes').value = p.gefAnderes || '';
+
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            ['art','int','gef','w','mass','wir','pos','hand'].forEach(g => {
+                if (p[g]) p[g].forEach(id => { const el = document.getElementById(id); if (el) el.checked = true; });
+            });
+            alert('📋 Protokoll geladen.');
+        }
+
+        function deleteProtocol(index) {
+            if (confirm('Wirklich löschen?')) {
+                protocols.splice(index, 1);
+                localStorage.setItem('beobachtungsprotokolle', JSON.stringify(protocols));
+                renderSavedList();
+            }
+        }
+
+        function renderSavedList() {
+            const container = document.getElementById('savedEntries');
+            container.innerHTML = '';
+            document.getElementById('count').textContent = `(${protocols.length})`;
+            if (protocols.length === 0) {
+                container.innerHTML = '<p style="color:#64748b;text-align:center;padding:2rem;">Noch keine Protokolle gespeichert.</p>';
+                return;
+            }
+            protocols.forEach((p, i) => {
+                const div = document.createElement('div');
+                div.style = 'border:1px solid #e2e8f0;border-radius:12px;padding:1.2rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;';
+                div.innerHTML = `<div><strong>${p.datum||''} ${p.uhrzeit||''} – ${p.schueler||''} (${p.klasse||''})</strong></div>
+                    <div>
+                        <button onclick="loadProtocol(${i});event.stopImmediatePropagation()" style="background:#3b82f6;color:white;padding:5px 12px;border-radius:6px;margin-right:6px;">Bearbeiten</button>
+                        <button onclick="deleteProtocol(${i});event.stopImmediatePropagation()" style="background:#ef4444;color:white;padding:5px 12px;border-radius:6px;">Löschen</button>
+                    </div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function resetForm() {
+            if (confirm('Neues leeres Protokoll starten?')) document.getElementById('protocolForm').reset();
+        }
+
+        function printProtocol() {
+            const checked = (pre) => Array.from(document.querySelectorAll(`input[id^="${pre}"]:checked`))
+                .map(c => c.parentElement.textContent.trim()).join(', ') || '–';
+
+            const printContent = `
+            <div class="print-area">
+                <h1>Beobachtungsprotokoll – verhaltensauffälliger Schüler</h1>
+                <p><strong>Klasse:</strong> ${document.getElementById('klasse').value || '–'}  <strong>Fach/Situation:</strong> ${document.getElementById('fach').value || '–'}</p>
+                <p><strong>Datum:</strong> ${document.getElementById('datum').value || '–'}  <strong>Uhrzeit:</strong> ${document.getElementById('uhrzeit').value || '–'}</p>
+                <p><strong>Lehrkraft:</strong> ${document.getElementById('lehrkraft').value || '–'}  <strong>Schüler:</strong> ${document.getElementById('schueler').value || '–'}</p>
+                
+                <h2>2. Beobachtetes Verhalten</h2><p>${document.getElementById('verhalten').value || '–'}</p>
+                <h2>3. Art des Vorfalls</h2><p>${checked('art')}</p>
+                <h2>4. Intensität des Verhaltens</h2><p>${checked('int')}</p>
+                <h2>5. Gefühlslage</h2><p>${checked('gef')}${document.getElementById('gefAnderes').value ? ` – Anderes: ${document.getElementById('gefAnderes').value}` : ''}</p>
+                <h2>7. Wiederholungsgefahr</h2><p>${checked('w')}</p>
+                <h2>8. Maßnahmen der Lehrkraft</h2><p>${checked('mass')}</p>
+                <p><strong>Beschreibung:</strong> ${document.getElementById('massBeschreibung').value || '–'}</p>
+                <h2>9. Wirkung der Maßnahme</h2><p>${checked('wir')}</p>
+                <h2>10. Rolle des Schulbegleiters</h2>
+                <p><strong>Position:</strong> ${checked('pos')}</p>
+                <p><strong>Handeln:</strong> ${checked('hand')}</p>
+            </div>`;
+
+            const original = document.body.innerHTML;
+            document.body.innerHTML = printContent;
+            window.print();
+            document.body.innerHTML = original;
+            setTimeout(renderSavedList, 100);
+        }
+
+        window.onload = renderSavedList;
+    </script>
+</body>
+</html>
