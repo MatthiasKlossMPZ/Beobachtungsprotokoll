@@ -1,24 +1,40 @@
 import { Link } from 'preact-router';
 import { useState } from 'preact/hooks';
 import EditStudentModal from './EditStudentModal.jsx';
+import { printStudentReportWithChart } from '../utils/printUtils.js';
 
 export default function StudentList({ students = [], incidents = [], refresh, saveStudents }) {
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentKlasse, setNewStudentKlasse] = useState('');
   const [editingStudent, setEditingStudent] = useState(null);
 
+  // Druck-Funktion für Gesamtbericht eines Schülers
+  const printStudentReport = (student) => {
+    const studentIncidents = incidents
+      .filter(i => i.studentId === student.id)
+      .sort((a, b) => new Date(b.datum) - new Date(a.datum));
+
+    if (studentIncidents.length === 0) {
+      alert(`Keine Vorfälle für ${student.name} vorhanden.`);
+      return;
+    }
+
+    printStudentReportWithChart(
+      { name: student.name, klasse: student.klasse },
+      studentIncidents,
+      { current: null } // Chart-Ref später erweitern, falls gewünscht
+    );
+  };
+
   const addNewStudent = async () => {
     if (!newStudentName.trim()) return alert('Bitte einen Namen eingeben');
-
     const newStudent = {
       id: 's_' + Date.now(),
       name: newStudentName.trim(),
       klasse: newStudentKlasse.trim() || 'unbekannt',
     };
-
     const all = [...students, newStudent];
     await saveStudents(all);
-
     setNewStudentName('');
     setNewStudentKlasse('');
   };
@@ -37,7 +53,6 @@ export default function StudentList({ students = [], incidents = [], refresh, sa
 
   const deleteStudent = async (student) => {
     if (!confirm(`Soll "${student.name}" wirklich gelöscht werden?\n\nAlle Vorfälle bleiben erhalten.`)) return;
-
     const updated = students.filter(s => s.id !== student.id);
     await saveStudents(updated);
     if (typeof refresh === 'function') refresh();
@@ -53,12 +68,15 @@ export default function StudentList({ students = [], incidents = [], refresh, sa
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-3xl font-bold">Schüler:innen ({students.length})</h2>
-        <Link href="/new" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium">
+        <Link 
+          href="/new" 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium transition"
+        >
           + Neuer Vorfall
         </Link>
       </div>
 
-      {/* Neuer Schüler */}
+      {/* Neuen Schüler hinzufügen */}
       <div className="bg-white rounded-3xl p-6 mb-10 shadow">
         <h3 className="font-semibold mb-4">Neuen Schüler hinzufügen</h3>
         <div className="flex gap-3">
@@ -78,53 +96,72 @@ export default function StudentList({ students = [], incidents = [], refresh, sa
           />
           <button
             onClick={addNewStudent}
-            className="px-8 bg-slate-800 hover:bg-slate-900 text-white rounded-2xl font-medium"
+            className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-medium transition"
           >
             Hinzufügen
           </button>
         </div>
       </div>
 
-      {/* Schülerliste */}
+      {/* Schüler Liste */}
       <div className="space-y-4">
-        {students.length === 0 ? (
-          <p className="text-center text-slate-500 py-12">Noch keine Schüler angelegt.</p>
-        ) : (
-          students.map(student => {
-            const last = getLastIncident(student.id);
-            return (
-              <div key={student.id} className="bg-white rounded-3xl p-6 shadow hover:shadow-lg transition group flex justify-between items-center">
-                <Link href={`/student/${student.id}`} className="flex-1">
-                  <h3 className="text-xl font-semibold">{student.name}</h3>
-                  <p className="text-slate-600">{student.klasse}</p>
-                  {last && (
-                    <p className="text-xs text-slate-500 mt-1">
-                      Letzter Vorfall: {new Date(last.datum).toLocaleDateString('de-DE')}
-                    </p>
-                  )}
+        {students.map((student) => {
+          const lastIncident = getLastIncident(student.id);
+          const studentIncidentsCount = incidents.filter(i => i.studentId === student.id).length;
+
+          return (
+            <div key={student.id} className="bg-white rounded-3xl p-6 shadow flex justify-between items-center">
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold">{student.name}</h3>
+                <p className="text-slate-600">Klasse: {student.klasse}</p>
+                <p className="text-sm text-slate-500 mt-1">
+                  {studentIncidentsCount} Vorfälle • 
+                  Letzter: {lastIncident 
+                    ? new Date(lastIncident.datum).toLocaleDateString('de-DE') 
+                    : 'keiner'}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => printStudentReport(student)}
+                  className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl flex items-center gap-2 transition font-medium"
+                >
+                  📄 Gesamtbericht
+                </button>
+
+                <Link
+                  href={`/student/${student.id}`}
+                  className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition font-medium"
+                >
+                  Details
                 </Link>
 
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
-                  <button
-                    onClick={() => startEdit(student)}
-                    className="px-5 py-3 text-amber-600 hover:bg-amber-50 rounded-2xl text-sm font-medium"
-                  >
-                    ✏️ Bearbeiten
-                  </button>
-                  <button
-                    onClick={() => deleteStudent(student)}
-                    className="px-5 py-3 text-red-600 hover:bg-red-50 rounded-2xl text-sm font-medium"
-                  >
-                    🗑️ Löschen
-                  </button>
-                </div>
+                <button
+                  onClick={() => startEdit(student)}
+                  className="px-4 py-3 border border-slate-300 hover:bg-slate-100 rounded-2xl transition"
+                >
+                  ✏️
+                </button>
+
+                <button
+                  onClick={() => deleteStudent(student)}
+                  className="px-4 py-3 border border-red-300 text-red-600 hover:bg-red-50 rounded-2xl transition"
+                >
+                  🗑️
+                </button>
               </div>
-            );
-          })
+            </div>
+          );
+        })}
+
+        {students.length === 0 && (
+          <p className="text-center text-slate-500 py-12">
+            Noch keine Schüler angelegt.
+          </p>
         )}
       </div>
 
-      {/* Edit Modal */}
       {editingStudent && (
         <EditStudentModal
           student={editingStudent}

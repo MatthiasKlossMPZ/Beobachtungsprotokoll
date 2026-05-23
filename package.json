@@ -11,6 +11,7 @@
   "dependencies": {
     "chart.js": "^4.5.1",
     "idb": "^8.0.3",
+    "jspdf": "^4.2.1",
     "preact": "^10.26.0",
     "preact-router": "^4.1.0"
   },
