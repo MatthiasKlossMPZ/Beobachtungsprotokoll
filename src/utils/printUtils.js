@@ -151,16 +151,15 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
   doc.setFontSize(15);
   doc.setTextColor(0);
   doc.text(`${student.name} • ${student.klasse}`, 20, y);
-  y += 28;
+  y += 22;   // etwas weniger Abstand zum Diagramm
 
-  // ==================== DIAGRAMM – zuverlässige Version ====================
+  // ==================== DIAGRAMM ====================
   if (chartInstanceRef.current) {
     const chart = chartInstanceRef.current;
 
     try {
       console.log('⏳ Starte Diagramm-Export...');
 
-      // Warten bis Chart wirklich fertig gerendert ist
       if (!chart._printReady) {
         console.log('⏳ Warte auf Chart-Rendering...');
         await new Promise(resolve => {
@@ -181,14 +180,11 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
         });
       }
 
-      // Chart finalisieren
       chart.update('none');
       await new Promise(resolve => setTimeout(resolve, 80));
 
       const imgData = chart.toBase64Image('image/png', 1.0);
-      
-      // Diagramm ins PDF einfügen
-      doc.addImage(imgData, 'PNG', 20, y, 170, 95);   // Breite 170mm, Höhe 95mm
+      doc.addImage(imgData, 'PNG', 20, y, 170, 95);
       console.log('✅ Diagramm erfolgreich ins PDF eingefügt!');
       y += 102;
 
@@ -196,19 +192,19 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
       console.error('❌ Diagramm-Fehler:', err);
       doc.setFontSize(11);
       doc.text('(Diagramm konnte nicht geladen werden)', 20, y);
-      y += 20;
+      y += 18;
     }
   } else {
     console.warn('⚠️ Keine Chart-Instanz gefunden');
     doc.setFontSize(11);
     doc.text('(Diagramm nicht verfügbar)', 20, y);
-    y += 20;
+    y += 18;
   }
 
   // ==================== VORFÄLLE ====================
   doc.setFontSize(16);
   doc.text('Dokumentierte Vorfälle', 20, y);
-  y += 16;
+  y += 14;   // engerer Abstand
 
   incidents
     .sort((a, b) => new Date(b.datum) - new Date(a.datum))
@@ -228,37 +224,40 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
       });
       
       doc.text(`${i + 1}. ${vorfallTexts.join(' • ')} — ${datumStr}`, 20, y);
-      y += 12;
+      y += 11;
 
+      // Beschreibung
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11.5);
       const descLines = doc.splitTextToSize(inc.vorfallBeschreibung || 'Keine Beschreibung', 165);
       doc.text(descLines, 22, y);
-      y += descLines.length * 6.4 + 10;
+      y += descLines.length * 6 + 8;
 
+      // Maßnahmen
       if (inc.massnahmenCodes?.length > 0) {
         const massnahmenTexts = (inc.massnahmenCodes || []).map(getMassnahmeText);
         doc.text('Maßnahmen: ' + massnahmenTexts.join(' • '), 22, y);
         y += 9;
       }
 
+      // Schulbegleiter (jetzt wieder enthalten)
       if (inc.schulbegleiter) {
         doc.text(`Schulbegleiter: ${getSchulbegleiterText(inc.schulbegleiter)}`, 22, y);
         y += 9;
       }
 
-      // Einschätzungen
+      // Einschätzungen – kompakter
       doc.setFontSize(11);
       const labelX = 25;
-      const valueX = 92;
+      const valueX = 85;   // näher ran
 
       doc.text('Wiederholungsgefahr:', labelX, y);
       doc.text(`${inc.wiederholungsgefahr} – ${getWiederholungText(inc.wiederholungsgefahr)}`, valueX, y);
-      y += 8;
+      y += 7.5;
 
       doc.text('Wirkung der Maßnahme:', labelX, y);
       doc.text(`${inc.wirkung} – ${getWirkungText(inc.wirkung)}`, valueX, y);
-      y += 8;
+      y += 7.5;
 
       doc.text('Intensität:', labelX, y);
       const color = intensityColors[inc.intensitaet] || [100, 100, 100];
@@ -267,14 +266,14 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
       doc.text(inc.intensitaet.toString(), valueX, y + 0.3);
       doc.setTextColor(0);
       doc.setFontSize(11);
-      doc.text(` – ${getIntensityText(inc.intensitaet)}`, valueX + 13, y);
-      y += 18;
+      doc.text(` – ${getIntensityText(inc.intensitaet)}`, valueX + 11, y);  // enger
+      y += 16;
     });
 
   // ==================== FOOTER ====================
   doc.setFontSize(10);
   doc.setTextColor(120);
-  doc.text('Erstellt mit dem digitalen Beobachtungsprotokoll', 20, y + 15);
+  doc.text('Erstellt mit dem digitalen Beobachtungsprotokoll', 20, y + 12);
 
   doc.save(`Gesamtbericht_${student.name.replace(/\s+/g, '_')}.pdf`);
   console.log('✅ PDF erfolgreich gespeichert!');
