@@ -85,12 +85,12 @@ export const printSingleIncident = async (incident, studentName) => {
   }
 
   // ==================== SCHULBEGLEITER ====================
-  if (incident.schulbegleiter) {
+  if (incident.schulbegleiterCode) {
     doc.setFontSize(14);
     doc.text('Schulbegleiter', 20, y);
     y += 9;
     doc.setFontSize(12);
-    doc.text(getSchulbegleiterText(incident.schulbegleiter), 20, y);
+    doc.text(getSchulbegleiterText(incident.schulbegleiterCode), 20, y);
     y += 16;
   }
 
@@ -185,7 +185,7 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
   // VORFÄLLE
   doc.setFontSize(16);
   doc.text('Dokumentierte Vorfälle', 20, y);
-  y += 12;
+  y += 22;
 
   incidents
     .sort((a, b) => new Date(b.datum) - new Date(a.datum))
@@ -242,7 +242,7 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
       doc.text(inc.intensitaet.toString(), valueX, y + 0.2);
       doc.setTextColor(0);
       doc.setFontSize(11);
-      doc.text(` – ${getIntensityText(inc.intensitaet)}`, valueX + 9, y);   // sehr eng
+      doc.text(` – ${getIntensityText(inc.intensitaet)}`, valueX + 6, y);   // sehr eng
       y += 15;
     });
 
