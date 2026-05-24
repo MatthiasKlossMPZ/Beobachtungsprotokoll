@@ -3,15 +3,12 @@ import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base: '/Beobachtungsprotokoll/',
-
   plugins: [
     preact(),
     VitePWA({
       registerType: 'autoUpdate',
       manifestFilename: 'manifest.json',
       injectRegister: 'script-defer',
-
       manifest: {
         name: 'Beobachtungsprotokoll',
         short_name: 'Beobachtung',
@@ -27,48 +24,40 @@ export default defineConfig({
           { src: '/Beobachtungsprotokoll/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
         ]
       },
-
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
-        
-        // WICHTIG für SPA-Routing auf GitHub Pages:
         navigateFallback: '/Beobachtungsprotokoll/index.html',
         navigateFallbackDenylist: [/^\/_/, /^\/api/],
-
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-
-        // Runtime Caching leicht angepasst (weniger aggressiv)
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/matthiasklossmpz\.github\.io\/Beobachtungsprotokoll/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'app-cache',
-              expiration: {
-                maxEntries: 200,
-              },
+              expiration: { maxEntries: 200 },
             },
           },
         ],
       },
-
-      devOptions: {
-        enabled: true
-      }
+      devOptions: { enabled: true }
     })
   ],
 
+  base: '/Beobachtungsprotokoll/',
+
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,           // Noch höher gesetzt
     rollupOptions: {
       output: {
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        manualChunks: {
+          jspdf: ['jspdf'],
+          vendor: ['preact', 'preact-router', 'preact/hooks'],
+          // Falls du noch mehr große Bibliotheken hast:
+          // charts: ['chart.js', 'react-chartjs-2']  // falls du Charts nutzt
+        }
       }
     }
   }

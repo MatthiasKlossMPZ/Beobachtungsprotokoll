@@ -134,38 +134,52 @@ export const printSingleIncident = async (incident, studentName) => {
 
   doc.save(`Protokoll_${studentName.replace(/\s+/g, '_')}_${new Date(incident.datum).toISOString().slice(0,10)}.pdf`);
 };
+
 // ====================== GESAMTBERICHT ======================
 export const printStudentReportWithChart = async (student, incidents, chartRef) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   let y = 22;
 
-  // ==================== TITEL ====================
+  console.log('🖨️ Druck gestartet – ChartRef vorhanden?', !!chartRef.current?.chart);
+
+  // Titel
   doc.setFontSize(24);
   doc.setTextColor(30, 64, 175);
   doc.text('Gesamtbericht', 20, y);
   y += 12;
-
   doc.setFontSize(15);
   doc.setTextColor(0);
   doc.text(`${student.name} • ${student.klasse}`, 20, y);
-  y += 22;
+  y += 28;
 
-  // ==================== DIAGRAMM ====================
+  // DIAGRAMM – extra lange Wartezeit + mehrmals updaten
   if (chartRef.current?.chart) {
     try {
-      const imgData = chartRef.current.chart.toBase64Image();
-      doc.addImage(imgData, 'PNG', 20, y, 170, 72);
-      y += 80;
+      await new Promise(resolve => setTimeout(resolve, 800)); // länger warten
+      chartRef.current.chart.update();
+      await new Promise(resolve => setTimeout(resolve, 200));
+      chartRef.current.chart.update();
+
+      const imgData = chartRef.current.chart.toBase64Image('image/png', 1.0);
+      doc.addImage(imgData, 'PNG', 20, y, 170, 95);
+      console.log('✅ Diagramm erfolgreich ins PDF eingefügt!');
+      y += 102;
     } catch (e) {
-      console.error(e);
+      console.error('❌ Diagramm-Fehler:', e);
+      doc.text('(Diagramm konnte nicht geladen werden)', 20, y);
+      y += 20;
     }
+  } else {
+    console.warn('⚠️ Kein Chart-Objekt gefunden');
+    doc.text('(Diagramm nicht verfügbar)', 20, y);
+    y += 20;
   }
 
+  // Vorfälle
   doc.setFontSize(16);
   doc.text('Dokumentierte Vorfälle', 20, y);
   y += 16;
 
-  // ==================== EINZELVORFÄLLE ====================
   incidents
     .sort((a, b) => new Date(b.datum) - new Date(a.datum))
     .forEach((inc, i) => {
@@ -174,74 +188,59 @@ export const printStudentReportWithChart = async (student, incidents, chartRef) 
         y = 25;
       }
 
-      // --- Fette Überschrift ---
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
-
       const vorfallTexts = (inc.vorfallCodes || []).map(getVorfallText);
       const datumStr = new Date(inc.datum).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) +
-                       ' • ' + new Date(inc.datum).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-
-      const headerText = `${i + 1}. ${vorfallTexts.join(' • ')} — ${datumStr}`;
-      doc.text(headerText, 20, y);
+        ' • ' + new Date(inc.datum).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      doc.text(`${i + 1}. ${vorfallTexts.join(' • ')} — ${datumStr}`, 20, y);
       y += 12;
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11.5);
-
-      // --- Beschreibung ---
-      const shortDesc = (inc.vorfallBeschreibung || 'Keine Beschreibung').substring(0, 220);
-      const descLines = doc.splitTextToSize(shortDesc + (shortDesc.length > 220 ? '...' : ''), 165);
+      const descLines = doc.splitTextToSize(inc.vorfallBeschreibung || 'Keine Beschreibung', 165);
       doc.text(descLines, 22, y);
       y += descLines.length * 6.4 + 10;
 
-      // --- Maßnahmen ---
       if (inc.massnahmenCodes?.length > 0) {
         const massnahmenTexts = (inc.massnahmenCodes || []).map(getMassnahmeText);
         doc.text('Maßnahmen: ' + massnahmenTexts.join(' • '), 22, y);
         y += 9;
       }
 
-      // --- Schulbegleiter ---
+      // Schulbegleiter
       if (inc.schulbegleiter) {
         doc.text(`Schulbegleiter: ${getSchulbegleiterText(inc.schulbegleiter)}`, 22, y);
         y += 9;
       }
 
-      // --- Auswertungen (sauber tabellarisch) ---
+      // Auswertungen
       doc.setFontSize(11);
       const labelX = 25;
       const valueX = 92;
 
-      // Wiederholungsgefahr
       doc.text('Wiederholungsgefahr:', labelX, y);
       doc.text(`${inc.wiederholungsgefahr} – ${getWiederholungText(inc.wiederholungsgefahr)}`, valueX, y);
-      y += 8.5;
+      y += 8;
 
-      // Wirkung
       doc.text('Wirkung der Maßnahme:', labelX, y);
       doc.text(`${inc.wirkung} – ${getWirkungText(inc.wirkung)}`, valueX, y);
-      y += 8.5;
+      y += 8;
 
-      // Intensität
       doc.text('Intensität:', labelX, y);
-      
       const color = intensityColors[inc.intensitaet] || [100, 100, 100];
       doc.setTextColor(...color);
       doc.setFontSize(12.5);
-      doc.text(inc.intensitaet.toString(), valueX, y + 0.5);
-
+      doc.text(inc.intensitaet.toString(), valueX, y + 0.3);
       doc.setTextColor(0);
       doc.setFontSize(11);
       doc.text(` – ${getIntensityText(inc.intensitaet)}`, valueX + 13, y);
-      
-      y += 20;   // Abstand zum nächsten Vorfall
+      y += 18;
     });
 
-  // Footer
   doc.setFontSize(10);
   doc.setTextColor(120);
-  doc.text('Erstellt mit dem digitalen Beobachtungsprotokoll', 20, y + 12);
+  doc.text('Erstellt mit dem digitalen Beobachtungsprotokoll', 20, y + 15);
 
   doc.save(`Gesamtbericht_${student.name.replace(/\s+/g, '_')}.pdf`);
 };
