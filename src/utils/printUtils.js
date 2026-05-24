@@ -135,47 +135,77 @@ export const printSingleIncident = async (incident, studentName) => {
   doc.save(`Protokoll_${studentName.replace(/\s+/g, '_')}_${new Date(incident.datum).toISOString().slice(0,10)}.pdf`);
 };
 
-// ====================== GESAMTBERICHT ======================
-export const printStudentReportWithChart = async (student, incidents, chartRef) => {
+// ====================== GESAMTBERICHT MIT DIAGRAMM ======================
+export const printStudentReportWithChart = async (student, incidents, chartInstanceRef) => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   let y = 22;
 
-  console.log('🖨️ Druck gestartet – ChartRef vorhanden?', !!chartRef.current?.chart);
+  console.log('🖨️ Gesamtbericht wird erstellt...');
 
-  // Titel
+  // ==================== HEADER ====================
   doc.setFontSize(24);
   doc.setTextColor(30, 64, 175);
   doc.text('Gesamtbericht', 20, y);
   y += 12;
+
   doc.setFontSize(15);
   doc.setTextColor(0);
   doc.text(`${student.name} • ${student.klasse}`, 20, y);
   y += 28;
 
-  // DIAGRAMM – extra lange Wartezeit + mehrmals updaten
-  if (chartRef.current?.chart) {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800)); // länger warten
-      chartRef.current.chart.update();
-      await new Promise(resolve => setTimeout(resolve, 200));
-      chartRef.current.chart.update();
+  // ==================== DIAGRAMM – zuverlässige Version ====================
+  if (chartInstanceRef.current) {
+    const chart = chartInstanceRef.current;
 
-      const imgData = chartRef.current.chart.toBase64Image('image/png', 1.0);
-      doc.addImage(imgData, 'PNG', 20, y, 170, 95);
+    try {
+      console.log('⏳ Starte Diagramm-Export...');
+
+      // Warten bis Chart wirklich fertig gerendert ist
+      if (!chart._printReady) {
+        console.log('⏳ Warte auf Chart-Rendering...');
+        await new Promise(resolve => {
+          const timeout = setTimeout(() => {
+            console.warn('⚠️ Timeout beim Warten auf Chart (2s)');
+            resolve();
+          }, 2000);
+
+          const check = () => {
+            if (chart._printReady) {
+              clearTimeout(timeout);
+              resolve();
+            } else {
+              requestAnimationFrame(check);
+            }
+          };
+          check();
+        });
+      }
+
+      // Chart finalisieren
+      chart.update('none');
+      await new Promise(resolve => setTimeout(resolve, 80));
+
+      const imgData = chart.toBase64Image('image/png', 1.0);
+      
+      // Diagramm ins PDF einfügen
+      doc.addImage(imgData, 'PNG', 20, y, 170, 95);   // Breite 170mm, Höhe 95mm
       console.log('✅ Diagramm erfolgreich ins PDF eingefügt!');
       y += 102;
-    } catch (e) {
-      console.error('❌ Diagramm-Fehler:', e);
+
+    } catch (err) {
+      console.error('❌ Diagramm-Fehler:', err);
+      doc.setFontSize(11);
       doc.text('(Diagramm konnte nicht geladen werden)', 20, y);
       y += 20;
     }
   } else {
-    console.warn('⚠️ Kein Chart-Objekt gefunden');
+    console.warn('⚠️ Keine Chart-Instanz gefunden');
+    doc.setFontSize(11);
     doc.text('(Diagramm nicht verfügbar)', 20, y);
     y += 20;
   }
 
-  // Vorfälle
+  // ==================== VORFÄLLE ====================
   doc.setFontSize(16);
   doc.text('Dokumentierte Vorfälle', 20, y);
   y += 16;
@@ -191,8 +221,12 @@ export const printStudentReportWithChart = async (student, incidents, chartRef) 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
       const vorfallTexts = (inc.vorfallCodes || []).map(getVorfallText);
-      const datumStr = new Date(inc.datum).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) +
-        ' • ' + new Date(inc.datum).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      const datumStr = new Date(inc.datum).toLocaleDateString('de-DE', { 
+        day: '2-digit', month: 'short', year: 'numeric' 
+      }) + ' • ' + new Date(inc.datum).toLocaleTimeString('de-DE', { 
+        hour: '2-digit', minute: '2-digit' 
+      });
+      
       doc.text(`${i + 1}. ${vorfallTexts.join(' • ')} — ${datumStr}`, 20, y);
       y += 12;
 
@@ -208,13 +242,12 @@ export const printStudentReportWithChart = async (student, incidents, chartRef) 
         y += 9;
       }
 
-      // Schulbegleiter
       if (inc.schulbegleiter) {
         doc.text(`Schulbegleiter: ${getSchulbegleiterText(inc.schulbegleiter)}`, 22, y);
         y += 9;
       }
 
-      // Auswertungen
+      // Einschätzungen
       doc.setFontSize(11);
       const labelX = 25;
       const valueX = 92;
@@ -238,9 +271,11 @@ export const printStudentReportWithChart = async (student, incidents, chartRef) 
       y += 18;
     });
 
+  // ==================== FOOTER ====================
   doc.setFontSize(10);
   doc.setTextColor(120);
   doc.text('Erstellt mit dem digitalen Beobachtungsprotokoll', 20, y + 15);
 
   doc.save(`Gesamtbericht_${student.name.replace(/\s+/g, '_')}.pdf`);
+  console.log('✅ PDF erfolgreich gespeichert!');
 };

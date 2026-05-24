@@ -80,6 +80,15 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
             maintainAspectRatio: false,
             plugins: { legend: { position: 'top' } },
             scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } },
+
+            animation: {
+      duration: 800, 
+      onComplete: function() {
+         chartInstanceRef.current._printReady = true;
+        console.log('✅ Chart ist druckbereit');
+      }
+    }
+
           },
         });
         console.log('✅ Chart erfolgreich erstellt!');
