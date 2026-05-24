@@ -142,7 +142,7 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
 
   console.log('🖨️ Gesamtbericht wird erstellt...');
 
-  // ==================== HEADER ====================
+  // HEADER
   doc.setFontSize(24);
   doc.setTextColor(30, 64, 175);
   doc.text('Gesamtbericht', 20, y);
@@ -151,68 +151,46 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
   doc.setFontSize(15);
   doc.setTextColor(0);
   doc.text(`${student.name} • ${student.klasse}`, 20, y);
-  y += 22;   // etwas weniger Abstand zum Diagramm
+  y += 18;   // weniger Abstand zum Diagramm
 
-  // ==================== DIAGRAMM ====================
+  // DIAGRAMM
   if (chartInstanceRef.current) {
     const chart = chartInstanceRef.current;
-
     try {
       console.log('⏳ Starte Diagramm-Export...');
-
       if (!chart._printReady) {
-        console.log('⏳ Warte auf Chart-Rendering...');
         await new Promise(resolve => {
-          const timeout = setTimeout(() => {
-            console.warn('⚠️ Timeout beim Warten auf Chart (2s)');
-            resolve();
-          }, 2000);
-
+          const timeout = setTimeout(() => resolve(), 1800);
           const check = () => {
-            if (chart._printReady) {
-              clearTimeout(timeout);
-              resolve();
-            } else {
-              requestAnimationFrame(check);
-            }
+            if (chart._printReady) { clearTimeout(timeout); resolve(); }
+            else requestAnimationFrame(check);
           };
           check();
         });
       }
-
       chart.update('none');
-      await new Promise(resolve => setTimeout(resolve, 80));
+      await new Promise(r => setTimeout(r, 80));
 
       const imgData = chart.toBase64Image('image/png', 1.0);
       doc.addImage(imgData, 'PNG', 20, y, 170, 95);
+      y += 100;
       console.log('✅ Diagramm erfolgreich ins PDF eingefügt!');
-      y += 102;
-
     } catch (err) {
       console.error('❌ Diagramm-Fehler:', err);
-      doc.setFontSize(11);
       doc.text('(Diagramm konnte nicht geladen werden)', 20, y);
-      y += 18;
+      y += 15;
     }
-  } else {
-    console.warn('⚠️ Keine Chart-Instanz gefunden');
-    doc.setFontSize(11);
-    doc.text('(Diagramm nicht verfügbar)', 20, y);
-    y += 18;
   }
 
-  // ==================== VORFÄLLE ====================
+  // VORFÄLLE
   doc.setFontSize(16);
   doc.text('Dokumentierte Vorfälle', 20, y);
-  y += 14;   // engerer Abstand
+  y += 12;
 
   incidents
     .sort((a, b) => new Date(b.datum) - new Date(a.datum))
     .forEach((inc, i) => {
-      if (y > 225) {
-        doc.addPage();
-        y = 25;
-      }
+      if (y > 230) { doc.addPage(); y = 25; }
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
@@ -222,55 +200,53 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
       }) + ' • ' + new Date(inc.datum).toLocaleTimeString('de-DE', { 
         hour: '2-digit', minute: '2-digit' 
       });
-      
       doc.text(`${i + 1}. ${vorfallTexts.join(' • ')} — ${datumStr}`, 20, y);
-      y += 11;
+      y += 10;
 
       // Beschreibung
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11.5);
       const descLines = doc.splitTextToSize(inc.vorfallBeschreibung || 'Keine Beschreibung', 165);
       doc.text(descLines, 22, y);
-      y += descLines.length * 6 + 8;
+      y += descLines.length * 5.8 + 8;
 
       // Maßnahmen
       if (inc.massnahmenCodes?.length > 0) {
         const massnahmenTexts = (inc.massnahmenCodes || []).map(getMassnahmeText);
         doc.text('Maßnahmen: ' + massnahmenTexts.join(' • '), 22, y);
-        y += 9;
+        y += 8;
       }
 
-      // Schulbegleiter (jetzt wieder enthalten)
-      if (inc.schulbegleiter) {
-        doc.text(`Schulbegleiter: ${getSchulbegleiterText(inc.schulbegleiter)}`, 22, y);
-        y += 9;
-      }
+      if (inc.schulbegleiterCode) {
+  doc.text(`Schulbegleiter: ${getSchulbegleiterText(inc.schulbegleiterCode)}`, 22, y);
+  y += 9;
+}
 
-      // Einschätzungen – kompakter
+      // Einschätzungen – sehr kompakt
       doc.setFontSize(11);
       const labelX = 25;
-      const valueX = 85;   // näher ran
+      const valueX = 78;   // noch näher
 
       doc.text('Wiederholungsgefahr:', labelX, y);
       doc.text(`${inc.wiederholungsgefahr} – ${getWiederholungText(inc.wiederholungsgefahr)}`, valueX, y);
-      y += 7.5;
+      y += 7;
 
       doc.text('Wirkung der Maßnahme:', labelX, y);
       doc.text(`${inc.wirkung} – ${getWirkungText(inc.wirkung)}`, valueX, y);
-      y += 7.5;
+      y += 7;
 
       doc.text('Intensität:', labelX, y);
       const color = intensityColors[inc.intensitaet] || [100, 100, 100];
       doc.setTextColor(...color);
       doc.setFontSize(12.5);
-      doc.text(inc.intensitaet.toString(), valueX, y + 0.3);
+      doc.text(inc.intensitaet.toString(), valueX, y + 0.2);
       doc.setTextColor(0);
       doc.setFontSize(11);
-      doc.text(` – ${getIntensityText(inc.intensitaet)}`, valueX + 11, y);  // enger
-      y += 16;
+      doc.text(` – ${getIntensityText(inc.intensitaet)}`, valueX + 9, y);   // sehr eng
+      y += 15;
     });
 
-  // ==================== FOOTER ====================
+  // FOOTER
   doc.setFontSize(10);
   doc.setTextColor(120);
   doc.text('Erstellt mit dem digitalen Beobachtungsprotokoll', 20, y + 12);
