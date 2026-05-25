@@ -15,7 +15,22 @@ const getIntensityText = (wert) => INTENSITAET.find(i => i.wert === wert)?.text 
 const getWiederholungText = (wert) => WIEDERHOLUNGSGEFAHR.find(w => w.wert === wert)?.text || wert;
 const getWirkungText = (wert) => WIRKUNG.find(w => w.wert === wert)?.text || wert;
 
-// Neue Hilfsfunktionen
+// ==================== SCHULBEGLEITER ====================
+export const getSchulbegleiterText = (code) => {
+  if (!code) return 'keine Angabe';
+  
+  const found = SCHULBEGLEITER_CODES.find(s => s.code === code);
+  return found ? found.bedeutung : code;
+};
+
+export const getSchulbegleiterFull = (code) => {
+  if (!code) return 'keine Angabe';
+  
+  const found = SCHULBEGLEITER_CODES.find(s => s.code === code);
+  return found ? `${code} – ${found.bedeutung}` : code;
+};
+
+// ==================== VORFALL FULL NAME (besteht schon) ====================
 export const getVorfallFullName = (code) => {
   const mapping = {
     'TD': 'Tötungsandrohung',
@@ -24,19 +39,8 @@ export const getVorfallFullName = (code) => {
     'ER': 'Erpressung',
     'DI': 'Diffamierung',
     'EX': 'Extremistischer Hintergrund',
-    // Hier weitere Codes ergänzen
   };
   return mapping[code] || code;
-};
-
-export const getSchulbegleiterText = (code) => {
-  const map = {
-    'deeskalierend': 'deeskalierend',
-    'eingreifend': 'eingreifend',
-    'beobachtend': 'beobachtend',
-    'keine': 'keine erkennbare Handlung',
-  };
-  return map[code] || code || 'keine Angabe';
 };
 
 // Farben für Intensität
@@ -105,15 +109,15 @@ export const printSingleIncident = async (incident, studentName) => {
     y += massnahmenTexts.length * 7.2 + 12;
   }
 
-  // Schulbegleiter
-  if (incident.schulbegleiterCode) {
-    doc.setFontSize(14);
-    doc.text('Schulbegleiter', 20, y);
-    y += 9;
-    doc.setFontSize(12);
-    doc.text(getSchulbegleiterText(incident.schulbegleiterCode), 20, y);
-    y += 16;
-  }
+// Schulbegleiter
+if (incident.schulbegleiterCode) {
+  doc.setFontSize(14);
+  doc.text('Schulbegleiter', 20, y);
+  y += 9;
+  doc.setFontSize(12);
+  doc.text(getSchulbegleiterFull(incident.schulbegleiterCode), 20, y);   // ← hier Full
+  y += 16;
+}
 
   // Einschätzungen
   doc.setFontSize(14);
@@ -139,7 +143,7 @@ export const printSingleIncident = async (incident, studentName) => {
   doc.text(incident.intensitaet.toString(), 88, y);
   doc.setTextColor(0);
   doc.setFontSize(12);
-  doc.text(` – ${getIntensityText(incident.intensitaet)}`, 97, y);
+  doc.text(` – ${getIntensityText(incident.intensitaet)}`, 92, y);
   y += 20;
 
   // Footer
@@ -222,8 +226,8 @@ export const printStudentReportWithChart = async (student, incidents, chartInsta
         y += 8;
       }
       if (inc.schulbegleiterCode) {
-        doc.text(`Schulbegleiter: ${getSchulbegleiterText(inc.schulbegleiterCode)}`, 22, y);
-        y += 9;
+      doc.text(`Schulbegleiter: ${getSchulbegleiterFull(inc.schulbegleiterCode)}`, 22, y);  // ← hier Full
+      y += 9;
       }
 
       // Einschätzungen
