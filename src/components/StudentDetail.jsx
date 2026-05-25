@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import { Link, route } from 'preact-router';
 import Chart from 'chart.js/auto';
-import { printSingleIncident, printStudentReportWithChart } from '../utils/printUtils.js';
+import { 
+  printSingleIncident, 
+  printStudentReportWithChart, 
+  getVorfallFullName, 
+  getSchulbegleiterText 
+} from '../utils/printUtils.js';
 
 export default function StudentDetail({ students = [], incidents = [], id }) {
   const [student, setStudent] = useState(null);
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
 
-  const studentIncidents = useMemo(() => 
+  const studentIncidents = useMemo(() =>
     incidents
       .filter(i => i.studentId === id)
       .sort((a, b) => new Date(b.datum) - new Date(a.datum))
@@ -21,25 +26,21 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
     else route('/');
   }, [students, id]);
 
-  // Diagramm – robustes Timing
+  // Diagramm
   useEffect(() => {
     if (chartInstanceRef.current) {
       chartInstanceRef.current.destroy();
       chartInstanceRef.current = null;
     }
-
     if (studentIncidents.length === 0) return;
 
-    // Warte, bis das Canvas wirklich im DOM ist
     const createChart = () => {
       if (!chartRef.current) {
-        console.log('⏳ Canvas noch nicht bereit – versuche erneut...');
         requestAnimationFrame(createChart);
         return;
       }
-
       try {
-        const dates = studentIncidents.map(i => 
+        const dates = studentIncidents.map(i =>
           new Date(i.datum).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
         );
 
@@ -80,18 +81,8 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
             maintainAspectRatio: false,
             plugins: { legend: { position: 'top' } },
             scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } },
-
-            animation: {
-      duration: 800, 
-      onComplete: function() {
-         chartInstanceRef.current._printReady = true;
-        console.log('✅ Chart ist druckbereit');
-      }
-    }
-
           },
         });
-        console.log('✅ Chart erfolgreich erstellt!');
       } catch (e) {
         console.error('❌ Chart Fehler:', e);
       }
@@ -115,14 +106,14 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
   };
 
   const handlePrintFullReport = () => {
-  if (student && studentIncidents.length > 0) {
-    printStudentReportWithChart(
-      { name: student.name, klasse: student.klasse }, 
-      studentIncidents, 
-      chartInstanceRef   
-    );
-  }
-};
+    if (student && studentIncidents.length > 0) {
+      printStudentReportWithChart(
+        { name: student.name, klasse: student.klasse },
+        studentIncidents,
+        chartInstanceRef
+      );
+    }
+  };
 
   if (!student) return <div className="p-8 text-center">Lade Schüler...</div>;
 
@@ -182,6 +173,7 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
         {/* Vorfall-Liste */}
         <div className="space-y-6">
           <h3 className="font-semibold text-lg mb-4">Dokumentierte Vorfälle ({studentIncidents.length})</h3>
+          
           {studentIncidents.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center text-slate-500">
               Noch keine Vorfälle dokumentiert.
@@ -191,29 +183,68 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
               <div key={inc.id} className="bg-white rounded-3xl p-6 shadow hover:shadow-md transition">
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${getIntensityStyle(inc.intensitaet)}`}>
-                        Intensität {inc.intensitaet}
-                      </span>
+                    {/* Kopfzeile */}
+                    <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mb-4">
+                      <div className="font-semibold text-lg text-slate-800">
+                        {inc.vorfallCodes && inc.vorfallCodes.length > 0
+                          ? inc.vorfallCodes.map(code => getVorfallFullName(code)).join(' / ')
+                          : 'Unbekannter Vorfall'}
+                      </div>
                       <p className="text-sm text-slate-500">
-                        {new Date(inc.datum).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'long' })}
+                        {new Date(inc.datum).toLocaleDateString('de-DE', {
+                          weekday: 'short',
+                          day: '2-digit',
+                          month: 'long'
+                        })}
                       </p>
+                      <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${getIntensityStyle(inc.intensitaet)}`}>
+                        {inc.intensitaet}
+                      </span>
                     </div>
-                    <p className="text-slate-700 leading-relaxed mb-4">
+
+                    {/* Beschreibung */}
+                    <p className="text-slate-700 leading-relaxed mb-5">
                       {inc.vorfallBeschreibung || 'Keine Beschreibung vorhanden.'}
                     </p>
-                    {(inc.vorfallCodes?.length > 0 || inc.massnahmenCodes?.length > 0) && (
-                      <div className="flex flex-wrap gap-2">
-                        {inc.vorfallCodes?.map(c => <span key={c} className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full">{c}</span>)}
-                        {inc.massnahmenCodes?.map(c => <span key={c} className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">{c}</span>)}
-                      </div>
-                    )}
+
+                    {/* Unten: Maßnahmen + Schulbegleiter */}
+                    <div className="space-y-4">
+                      {inc.massnahmenCodes?.length > 0 && (
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-emerald-600 mb-1">Ergriffene Maßnahmen</p>
+                          <div className="flex flex-wrap gap-2">
+                            {inc.massnahmenCodes.map(c => (
+                              <span key={c} className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {inc.schulbegleiterCode && (
+                        <div>
+                          <p className="text-xs uppercase tracking-widest text-slate-600 mb-1">Schulbegleiter</p>
+                          <p className="text-sm font-medium text-slate-700">
+                            {getSchulbegleiterText(inc.schulbegleiterCode)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Buttons */}
                   <div className="flex flex-col gap-3 w-40">
-                    <button onClick={() => handlePrintIncident(inc)} className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-sm font-medium transition">
+                    <button
+                      onClick={() => handlePrintIncident(inc)}
+                      className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-sm font-medium transition"
+                    >
                       📄 Einzeln drucken
                     </button>
-                    <Link href={`/edit/${inc.id}`} className="px-5 py-3 bg-amber-600 hover:bg-amber-700 text-white text-center rounded-2xl text-sm font-medium transition">
+                    <Link
+                      href={`/edit/${inc.id}`}
+                      className="px-5 py-3 bg-amber-600 hover:bg-amber-700 text-white text-center rounded-2xl text-sm font-medium transition"
+                    >
                       ✏️ Bearbeiten
                     </Link>
                   </div>
