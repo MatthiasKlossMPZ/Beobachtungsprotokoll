@@ -42,7 +42,7 @@ export const printSingleIncident = async (incident, studentName) => {
 
   // ==================== VORFALL (Was passierte) ====================
   doc.setFontSize(14);
-  doc.text('Was passierte', 20, y);
+  doc.text('Art des Vorfalls', 20, y);
   y += 8;
 
   const vorfallTexts = (incident.vorfallCodes || []).map(getVorfallText);
@@ -94,38 +94,35 @@ export const printSingleIncident = async (incident, studentName) => {
     y += 16;
   }
 
-  // ==================== EINSCHÄTZUNG ====================
-  doc.setFontSize(14);
-  doc.text('Einschätzung', 20, y);
-  y += 12;
+// ==================== EINSCHÄTZUNGEN ====================
+doc.setFontSize(14);
+doc.text('Einschätzungen', 20, y);
+y += 12;
 
-  doc.setFontSize(12);
+doc.setFontSize(12);
 
-  // Wiederholungsgefahr
-  doc.text('Wiederholungsgefahr', 25, y);
-  doc.text(`${incident.wiederholungsgefahr} – ${getWiederholungText(incident.wiederholungsgefahr)}`, 90, y);
-  y += 11;
+// Wiederholungsgefahr
+doc.text('Wiederholungsgefahr', 25, y);
+doc.text(`${incident.wiederholungsgefahr} – ${getWiederholungText(incident.wiederholungsgefahr)}`, 88, y);
+y += 11;
 
-  // Wirkung
-  doc.text('Wirkung der Maßnahme', 25, y);
-  doc.text(`${incident.wirkung} – ${getWirkungText(incident.wirkung)}`, 90, y);
-  y += 11;
+// Wirkung der Maßnahme
+doc.text('Wirkung der Maßnahme', 25, y);
+doc.text(`${incident.wirkung} – ${getWirkungText(incident.wirkung)}`, 88, y);
+y += 11;
 
-  // Intensität mit farbigem Kasten
-  doc.text('Intensität', 25, y);
-  
-  const color = intensityColors[incident.intensitaet] || [100, 100, 100];
-  doc.setFillColor(...color);
-  doc.roundedRect(88, y - 6, 19, 19, 3, 3, 'F');   // Kleineres Rechteck
+// Intensität
+doc.text('Intensität', 25, y);
 
-  doc.setTextColor(255);
-  doc.setFontSize(16);
-  doc.text(incident.intensitaet.toString(), 93.5, y + 7.5);   // Zentriert
+const color = intensityColors[incident.intensitaet] || [100, 100, 100];
+doc.setTextColor(...color);
+doc.setFontSize(12.5);
+doc.text(incident.intensitaet.toString(), 88, y);
 
-  doc.setTextColor(0);
-  doc.setFontSize(12);
-  doc.text(getIntensityText(incident.intensitaet), 115, y + 1);
-  y += 22;
+doc.setTextColor(0);
+doc.setFontSize(12);
+doc.text(` – ${getIntensityText(incident.intensitaet)}`, 93, y);
+y += 11;
 
   // Footer
   doc.setFontSize(10);

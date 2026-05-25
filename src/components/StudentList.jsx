@@ -1,30 +1,11 @@
 import { Link } from 'preact-router';
 import { useState } from 'preact/hooks';
 import EditStudentModal from './EditStudentModal.jsx';
-import { printStudentReportWithChart } from '../utils/printUtils.js';
 
 export default function StudentList({ students = [], incidents = [], refresh, saveStudents }) {
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentKlasse, setNewStudentKlasse] = useState('');
   const [editingStudent, setEditingStudent] = useState(null);
-
-  // Druck-Funktion für Gesamtbericht eines Schülers
-  const printStudentReport = (student) => {
-    const studentIncidents = incidents
-      .filter(i => i.studentId === student.id)
-      .sort((a, b) => new Date(b.datum) - new Date(a.datum));
-
-    if (studentIncidents.length === 0) {
-      alert(`Keine Vorfälle für ${student.name} vorhanden.`);
-      return;
-    }
-
-    printStudentReportWithChart(
-      { name: student.name, klasse: student.klasse },
-      studentIncidents,
-      { current: null } // Chart-Ref später erweitern, falls gewünscht
-    );
-  };
 
   const addNewStudent = async () => {
     if (!newStudentName.trim()) return alert('Bitte einen Namen eingeben');
@@ -123,31 +104,24 @@ export default function StudentList({ students = [], incidents = [], refresh, sa
               </div>
 
               <div className="flex gap-3">
-                <button
-                  onClick={() => printStudentReport(student)}
-                  className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl flex items-center gap-2 transition font-medium"
-                >
-                  📄 Gesamtbericht
-                </button>
-
                 <Link
                   href={`/student/${student.id}`}
                   className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition font-medium"
-                >
+  >
                   Details
                 </Link>
 
                 <button
                   onClick={() => startEdit(student)}
                   className="px-4 py-3 border border-slate-300 hover:bg-slate-100 rounded-2xl transition"
-                >
+  >
                   ✏️
                 </button>
 
                 <button
                   onClick={() => deleteStudent(student)}
                   className="px-4 py-3 border border-red-300 text-red-600 hover:bg-red-50 rounded-2xl transition"
-                >
+  >
                   🗑️
                 </button>
               </div>
