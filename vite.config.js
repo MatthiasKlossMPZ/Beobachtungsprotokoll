@@ -18,7 +18,7 @@ export default defineConfig({
     description: "Digitales Beobachtungs- und Vorfallprotokoll für Schulen",
     start_url: "/Beobachtungsprotokoll/",
     scope: "/Beobachtungsprotokoll/",
-    display: "standalone",
+    display: "minimal-ui",
     display_override: ["window-controls-overlay", "minimal-ui", "browser"],
     orientation: "portrait-primary",
     theme_color: "#1e40af",
