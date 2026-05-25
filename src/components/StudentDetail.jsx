@@ -7,6 +7,7 @@ import {
   getVorfallFullName, 
   getSchulbegleiterText 
 } from '../utils/printUtils.js';
+import { db } from '../db.js';
 
 export default function StudentDetail({ students = [], incidents = [], id }) {
   const [student, setStudent] = useState(null);
@@ -99,8 +100,8 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
       case 4: return "bg-red-100 text-red-700";
       default: return "bg-slate-100 text-slate-700";
     }
-  };
-
+  };  
+  
   const handlePrintIncident = (incident) => {
     if (student) printSingleIncident(incident, student.name);
   };
@@ -112,6 +113,22 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
         studentIncidents,
         chartInstanceRef
       );
+    }
+  };
+
+  // ==================== LÖSCH-FUNKTION ====================
+  const handleDeleteIncident = async (incident) => {
+    const confirmText = `Soll der Vorfall vom ${new Date(incident.datum).toLocaleDateString('de-DE')} wirklich GELÖSCHT werden?\n\nDiese Aktion kann NICHT rückgängig gemacht werden!`;
+
+    if (!window.confirm(confirmText)) return;
+
+    try {
+      await db.deleteIncident(incident.id);
+      alert('✅ Der Vorfall wurde erfolgreich gelöscht.');
+      window.location.reload();
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      alert('❌ Fehler beim Löschen des Vorfalls.');
     }
   };
 
@@ -247,6 +264,12 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
                     >
                       ✏️ Bearbeiten
                     </Link>
+                    <button
+                      onClick={() => handleDeleteIncident(inc)}
+                      className="px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl text-sm font-medium transition flex items-center justify-center gap-2"
+  >
+                      🗑️ Löschen
+                    </button>
                   </div>
                 </div>
               </div>

@@ -187,7 +187,33 @@ export const db = {
 
     // App neu starten
     window.location.reload();
+  },
+
+
+// ==================== DELETE INCIDENT ====================
+async deleteIncident(incidentId) {
+  if (!encryptionKey) throw new Error('Database not unlocked');
+
+  const dbInstance = await getDB();
+  const encryptedData = await dbInstance.get(STORE_NAME, 'data');
+  let current = await decrypt(encryptedData, encryptionKey);
+
+  // Vorfall löschen
+  const initialLength = current.incidents.length;
+  current.incidents = current.incidents.filter(inc => inc.id !== incidentId);
+
+  if (current.incidents.length === initialLength) {
+    throw new Error('Vorfall nicht gefunden');
   }
+
+  // Wieder verschlüsseln und speichern
+  const newEncrypted = await encrypt(current, encryptionKey);
+  await dbInstance.put(STORE_NAME, newEncrypted, 'data');
+
+  console.log(`✅ Vorfall ${incidentId} gelöscht`);
+  return true;
+}
+
 };
 
 export { getDB };
