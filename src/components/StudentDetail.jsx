@@ -14,11 +14,20 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
 
-  const studentIncidents = useMemo(() =>
-    incidents
-      .filter(i => i.studentId === id)
-      .sort((a, b) => new Date(b.datum) - new Date(a.datum))
-  , [incidents, id]);
+  const studentIncidents = useMemo(() => {
+  return incidents
+    .filter(i => i.studentId === id)
+    .sort((a, b) => {
+      const dateA = new Date(a.datum);
+      const dateB = new Date(b.datum);
+
+      // Fallback für ungültige Daten
+      if (isNaN(dateA.getTime())) return 1;
+      if (isNaN(dateB.getTime())) return -1;
+
+      return dateB.getTime() - dateA.getTime();
+    });
+}, [incidents, id]);
 
   // Student laden
   useEffect(() => {
@@ -27,70 +36,92 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
     else route('/');
   }, [students, id]);
 
-  // Diagramm
-  useEffect(() => {
-    if (chartInstanceRef.current) {
-      chartInstanceRef.current.destroy();
-      chartInstanceRef.current = null;
+// Diagramm
+useEffect(() => {
+  if (chartInstanceRef.current) {
+    chartInstanceRef.current.destroy();
+    chartInstanceRef.current = null;
+  }
+
+  if (studentIncidents.length === 0) return;
+
+  const createChart = () => {
+    if (!chartRef.current) {
+      requestAnimationFrame(createChart);
+      return;
     }
-    if (studentIncidents.length === 0) return;
 
-    const createChart = () => {
-      if (!chartRef.current) {
-        requestAnimationFrame(createChart);
-        return;
-      }
-      try {
-        const dates = studentIncidents.map(i =>
-          new Date(i.datum).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
-        );
+    try {
+      // Für das Diagramm chronologisch sortieren: älteste zuerst
+      const chartIncidents = [...studentIncidents].sort((a, b) => {
+        return new Date(a.datum) - new Date(b.datum);
+      });
 
-        chartInstanceRef.current = new Chart(chartRef.current, {
-          type: 'line',
-          data: {
-            labels: dates,
-            datasets: [
-              {
-                label: 'Intensität',
-                data: studentIncidents.map(i => i.intensitaet),
-                borderColor: '#e11d48',
-                backgroundColor: 'rgba(225, 29, 72, 0.1)',
-                borderWidth: 4,
-                tension: 0.35,
-                pointRadius: 5,
-              },
-              {
-                label: 'Wiederholungsgefahr',
-                data: studentIncidents.map(i => i.wiederholungsgefahr),
-                borderColor: '#d97706',
-                backgroundColor: 'rgba(217, 119, 6, 0.1)',
-                borderWidth: 3,
-                tension: 0.35,
-              },
-              {
-                label: 'Wirkung der Maßnahme',
-                data: studentIncidents.map(i => i.wirkung),
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                borderWidth: 3,
-                tension: 0.35,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'top' } },
-            scales: { y: { min: 1, max: 5, ticks: { stepSize: 1 } } },
-          },
+      const labels = chartIncidents.map(i => {
+        const date = new Date(i.datum);
+        return date.toLocaleDateString('de-DE', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
         });
-      } catch (e) {
-        console.error('❌ Chart Fehler:', e);
-      }
-    };
+      });
 
-    requestAnimationFrame(() => requestAnimationFrame(createChart));
-  }, [studentIncidents]);
+      chartInstanceRef.current = new Chart(chartRef.current, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Intensität',
+              data: chartIncidents.map(i => i.intensitaet),
+              borderColor: '#e11d48',
+              backgroundColor: 'rgba(225, 29, 72, 0.1)',
+              borderWidth: 4,
+              tension: 0.35,
+              pointRadius: 5,
+            },
+            {
+              label: 'Wiederholungsgefahr',
+              data: chartIncidents.map(i => i.wiederholungsgefahr),
+              borderColor: '#d97706',
+              backgroundColor: 'rgba(217, 119, 6, 0.1)',
+              borderWidth: 3,
+              tension: 0.35,
+            },
+            {
+              label: 'Wirkung der Maßnahme',
+              data: chartIncidents.map(i => i.wirkung),
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 3,
+              tension: 0.35,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                title: (tooltipItems) => tooltipItems[0].label
+              }
+            }
+          },
+          scales: {
+            x: { reverse: false },   // wichtig: nicht umkehren
+            y: { min: 1, max: 5, ticks: { stepSize: 1 } }
+          },
+        },
+      });
+    } catch (e) {
+      console.error('❌ Chart Fehler:', e);
+    }
+  };
+
+  requestAnimationFrame(() => requestAnimationFrame(createChart));
+}, [studentIncidents]);
 
   const getIntensityStyle = (level) => {
     switch (level) {
@@ -209,9 +240,10 @@ export default function StudentDetail({ students = [], incidents = [], id }) {
                       </div>
                       <p className="text-sm text-slate-500">
                         {new Date(inc.datum).toLocaleDateString('de-DE', {
-                          weekday: 'short',
-                          day: '2-digit',
-                          month: 'long'
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
                         })}
                       </p>
                       <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${getIntensityStyle(inc.intensitaet)}`}>
