@@ -160,30 +160,38 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="bg-blue-700 text-white shadow-md">
-      <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-      <span className="text-3xl">📋</span>
-      <h1 className="text-2xl font-bold">Beobachtungsprotokoll v0.9x</h1>
+  <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      {/* Angepasstes Icon mit korrektem Pfad */}
+      <img 
+  src="/Beobachtungsprotokoll/pwa-192x192.png" 
+  alt="Beobachtungsprotokoll Icon" 
+  className="w-10 h-10 rounded-xl object-contain bg-white p-0.5 shadow-sm" 
+/>
+      
+      <div>
+        <h1 className="text-2xl font-bold">Beobachtungsprotokoll</h1>
+        <p className="text-xs text-blue-200 -mt-1">v0.9y</p>
+      </div>
     </div>
-    
-    <div className="flex items-center gap-3 text-sm">
-    <span className={`px-3 py-1 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}>
-    {isOnline ? 'Online' : 'Offline'}
-    </span>
-  
-    <button
-    onClick={() => setShowBackupModal(true)}
-    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-xl transition font-medium"
-  >
-    💾 Backup
-    </button>
 
-    <button
-    onClick={handleLogout}
-    className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-xl transition font-medium"
-    >
-    Abmelden
-    </button>
+    {/* Rest bleibt gleich */}
+    <div className="flex items-center gap-3 text-sm">
+      <span className={`px-3 py-1 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}>
+        {isOnline ? 'Online' : 'Offline'}
+      </span>
+      <button
+        onClick={() => setShowBackupModal(true)}
+        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-xl transition font-medium"
+      >
+        💾 Backup
+      </button>
+      <button
+        onClick={handleLogout}
+        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-xl transition font-medium"
+      >
+        Abmelden
+      </button>
     </div>
   </div>
 </header>
@@ -266,7 +274,7 @@ export default function App() {
       {/* Copyright Footer */}
     <footer className="mt-auto fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 text-center text-xs text-slate-500 z-50">
       <div className="max-w-5xl mx-auto px-6 flex justify-between items-center">
-        <p>© {new Date().getFullYear()} Matthias Kloss • Beobachtungsprotokoll</p>
+        <p>© {new Date().getFullYear()} Matthias Kloß • Beobachtungsprotokoll</p>
         <p className="hidden sm:block">Alle Daten bleiben lokal auf diesem Gerät</p>
       </div>
     </footer>
