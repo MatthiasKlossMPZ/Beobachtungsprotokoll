@@ -54,6 +54,28 @@ async function getDB() {
   return dbPromise;
 }
 
+export async function resetAppData() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase('BeobachtungsprotokollDB');
+
+    request.onsuccess = () => {
+      console.log('[DB] BeobachtungsprotokollDB erfolgreich gelöscht');
+      resolve();
+    };
+
+    request.onerror = (event) => {
+      console.error('[DB] Fehler beim Löschen der Datenbank', event);
+      reject(event.target.error);
+    };
+
+    request.onblocked = () => {
+      console.warn('[DB] Datenbank-Löschung blockiert (offene Verbindungen). Seite wird neu geladen...');
+      // Fallback: nach kurzer Zeit neu laden
+      setTimeout(() => window.location.reload(), 500);
+    };
+  });
+}
+
 // ============== Haupt-DB API ==============
 export const db = {
   async initPassword(password) {
