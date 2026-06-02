@@ -73,28 +73,31 @@ useEffect(() => {
           datasets: [
             {
               label: 'Intensität',
-              data: chartIncidents.map(i => i.intensitaet),
+              data: chartIncidents.map(i => i.intensitaet ?? 0),
               borderColor: '#e11d48',
               backgroundColor: 'rgba(225, 29, 72, 0.1)',
               borderWidth: 4,
               tension: 0.35,
               pointRadius: 5,
+              spanGaps: false,
             },
             {
               label: 'Wiederholungsgefahr',
-              data: chartIncidents.map(i => i.wiederholungsgefahr),
+              data: chartIncidents.map(i => i.wiederholungsgefahr ?? 0),
               borderColor: '#d97706',
               backgroundColor: 'rgba(217, 119, 6, 0.1)',
               borderWidth: 3,
               tension: 0.35,
+              spanGaps: false,
             },
             {
               label: 'Wirkung der Maßnahme',
-              data: chartIncidents.map(i => i.wirkung),
+              data: chartIncidents.map(i => i.wirkung ?? 0),
               borderColor: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.1)',
               borderWidth: 3,
               tension: 0.35,
+              spanGaps: false,
             },
           ],
         },
@@ -111,7 +114,17 @@ useEffect(() => {
           },
           scales: {
             x: { reverse: false },   // wichtig: nicht umkehren
-            y: { min: 1, max: 5, ticks: { stepSize: 1 } }
+            y: { 
+              min: 0,           // wichtig!
+              max: 5, 
+              ticks: { 
+              stepSize: 1,
+              callback: function(value) {
+              if (value === 0) return 'nicht bekannt';
+              return value;
+          }
+    }
+  }
           },
         },
       });

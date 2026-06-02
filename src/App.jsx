@@ -171,7 +171,7 @@ export default function App() {
       
       <div>
         <h1 className="text-2xl font-bold">Beobachtungsprotokoll</h1>
-        <p className="text-xs text-blue-200 -mt-1">v0.9y</p>
+        <p className="text-xs text-blue-200 -mt-1">v0.9Z</p>
       </div>
     </div>
 

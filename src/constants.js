@@ -9,15 +9,31 @@ export const VORFALL_CODES = [
 
 export const MASSNAHMEN_CODES = [
   { code: "ERM", bedeutung: "Ermahnung" },
-  { code: "GE",  bedeutung: "Einzelgespräch" },
+  { code: "PGE",  bedeutung: "pädagogisches Gespräch" },
   { code: "GG",  bedeutung: "Gruppengespräch" },
-  { code: "AZ",  bedeutung: "Auszeit" },
+  { code: "AS",  bedeutung: "Ausschluss aus der laufenden Stunde" },
   { code: "EL",  bedeutung: "Elternkontakt" },
   { code: "SL",  bedeutung: "Schulleitung einbezogen" },
   { code: "SSA", bedeutung: "Schulsozialarbeit" },
-  { code: "OM",  bedeutung: "Ordnungsmaßnahme" },
-  { code: "NF",  bedeutung: "Notfallmaßnahme" }
+  { code: "NF",  bedeutung: "Notfallmeldung" },
+  { code: "GA",  bedeutung: "gemeinsame Absprachen" },
+  { code: "WG",  bedeutung: "Wiedergutmachung" },
+  { code: "EKL",  bedeutung: "Eintrag ins Klassenbuch" },
+  { code: "TAD",  bedeutung: "mündlicher / schriftlicher Tadel" },
+  { code: "NAA",  bedeutung: "Nacharbeit und Aufsicht" },
+  { code: "EVG",  bedeutung: "vorübergehende Entziehung von Gegenständen" }
 ];
+
+export const MASSNAHMEN_FARBEN = {
+  "PGE": "amber",
+  "AS":  "amber",
+  "GA":  "amber",
+  "WG":  "amber",
+  "EKL": "amber",
+  "TAD": "amber",
+  "NAA": "amber",
+  "EVG": "amber",
+};
 
 export const SCHULBEGLEITER_CODES = [
   { code: "B",  bedeutung: "beobachtend" },
@@ -28,6 +44,7 @@ export const SCHULBEGLEITER_CODES = [
 ];
 
 export const WIEDERHOLUNGSGEFAHR = [
+  { wert: 0, text: "nicht bekannt" },
   { wert: 1, text: "nein" },
   { wert: 2, text: "eher nein" },
   { wert: 3, text: "unsicher" },
@@ -36,6 +53,7 @@ export const WIEDERHOLUNGSGEFAHR = [
 ];
 
 export const WIRKUNG = [
+  { wert: 0, text: "nicht bekannt" },
   { wert: 1, text: "Eskalation" },
   { wert: 2, text: "keine Veränderung" },
   { wert: 3, text: "kurzfristige Beruhigung" },
@@ -43,6 +61,7 @@ export const WIRKUNG = [
 ];
 
 export const INTENSITAET = [
+  { wert: 0, text: "nicht bekannt" },
   { wert: 1, text: "gering (kaum störend)" },
   { wert: 2, text: "mittel (deutlich störend)" },
   { wert: 3, text: "hoch (massiv störend)" },

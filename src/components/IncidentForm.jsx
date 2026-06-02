@@ -3,6 +3,7 @@ import { route } from 'preact-router';
 import {
   VORFALL_CODES,
   MASSNAHMEN_CODES,
+  MASSNAHMEN_FARBEN,
   SCHULBEGLEITER_CODES,
   WIEDERHOLUNGSGEFAHR,
   WIRKUNG,
@@ -29,9 +30,9 @@ export default function IncidentForm({
     vorfallCodes: [],
     massnahmenCodes: [],
     schulbegleiterCode: '',
-    wiederholungsgefahr: 3,
-    wirkung: 2,
-    intensitaet: 2
+    wiederholungsgefahr: 0,
+    wirkung: 0,
+    intensitaet: 0
   });
 
   const [saving, setSaving] = useState(false);
@@ -243,19 +244,29 @@ const handleCancelConfirm = () => {
         <div>
           <label className="block text-sm font-medium mb-3">Ergriffene Maßnahmen</label>
           <div className="flex flex-wrap gap-3">
-            {MASSNAHMEN_CODES.map(item => (
-              <button
+            {MASSNAHMEN_CODES.map((item) => {
+              const isSelected = form.massnahmenCodes.includes(item.code);
+              const farbe = MASSNAHMEN_FARBEN[item.code];     // Holt "amber" oder undefined
+
+              return (
+               <button
                 type="button"
                 key={item.code}
                 onClick={() => toggleCode('massnahmenCodes', item.code)}
-                className={`px-4 py-2 rounded-xl text-sm transition-all border
-                  ${form.massnahmenCodes.includes(item.code)
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-white border-slate-300 hover:border-slate-400'}`}
-              >
-                {item.code} — {item.bedeutung}
-              </button>
-            ))}
+                className={`px-4 py-3 rounded-2xl text-sm font-medium border transition-all
+                  ${isSelected 
+                    ? farbe 
+                      ? `bg-amber-600 text-white border-amber-600 shadow-sm` 
+                      : `bg-emerald-600 text-white border-emerald-600`
+                    : farbe 
+                      ? `bg-amber-100 border-amber-200 hover:bg-amber-200 text-amber-800` 
+                      : `bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400`
+                  }`}
+                >
+                  {item.code} — {item.bedeutung}
+                </button>
+              );
+            })}
           </div>
         </div>
 
