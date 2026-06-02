@@ -51,9 +51,9 @@ export default function IncidentForm({
           vorfallCodes: found.vorfallCodes || [],
           massnahmenCodes: found.massnahmenCodes || [],
           schulbegleiterCode: found.schulbegleiterCode || '',
-          wiederholungsgefahr: found.wiederholungsgefahr || 3,
-          wirkung: found.wirkung || 2,
-          intensitaet: found.intensitaet || 2
+          wiederholungsgefahr: found.wiederholungsgefahr || 0,
+          wirkung: found.wirkung || 0,
+          intensitaet: found.intensitaet || 0
         });
       }
     }
@@ -115,9 +115,9 @@ const handleCancel = () => {
     (form.vorfallCodes?.length > 0) ||
     (form.massnahmenCodes?.length > 0) ||
     form.schulbegleiterCode ||
-    form.wiederholungsgefahr !== 3 ||   // Default-Wert
-    form.wirkung !== 2 ||
-    form.intensitaet !== 2;
+    form.wiederholungsgefahr !== 0 ||   // Default-Wert
+    form.wirkung !== 0 ||
+    form.intensitaet !== 0;
 
   if (hasChanges) {
     setShowCancelModal(true);

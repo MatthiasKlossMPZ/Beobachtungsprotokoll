@@ -73,7 +73,7 @@ useEffect(() => {
           datasets: [
             {
               label: 'Intensität',
-              data: chartIncidents.map(i => i.intensitaet ?? 0),
+              data: chartIncidents.map(i => i.intensitaet === 0 ? null : i.intensitaet),
               borderColor: '#e11d48',
               backgroundColor: 'rgba(225, 29, 72, 0.1)',
               borderWidth: 4,
@@ -83,7 +83,7 @@ useEffect(() => {
             },
             {
               label: 'Wiederholungsgefahr',
-              data: chartIncidents.map(i => i.wiederholungsgefahr ?? 0),
+              data: chartIncidents.map(i => i.wiederholungsgefahr === 0 ? null : i.wiederholungsgefahr),
               borderColor: '#d97706',
               backgroundColor: 'rgba(217, 119, 6, 0.1)',
               borderWidth: 3,
@@ -92,7 +92,7 @@ useEffect(() => {
             },
             {
               label: 'Wirkung der Maßnahme',
-              data: chartIncidents.map(i => i.wirkung ?? 0),
+              data: chartIncidents.map(i => i.wirkung === 0 ? null : i.wirkung),
               borderColor: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.1)',
               borderWidth: 3,
@@ -108,14 +108,17 @@ useEffect(() => {
             legend: { position: 'top' },
             tooltip: {
               callbacks: {
-                title: (tooltipItems) => tooltipItems[0].label
+                label: (context) => {
+                  if (context.raw === null || context.raw === 0) return 'nicht bekannt';
+                  return context.raw;
+                }
               }
             }
           },
           scales: {
-            x: { reverse: false },   // wichtig: nicht umkehren
+            x: { reverse: false },
             y: { 
-              min: 0,           // wichtig!
+              min: 0,
               max: 5, 
               ticks: { 
               stepSize: 1,
@@ -202,24 +205,36 @@ useEffect(() => {
 
       <div className="max-w-5xl mx-auto px-6 pt-8 pb-12">
         {/* Statistik */}
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white rounded-3xl p-6 text-center shadow-sm">
-            <p className="text-slate-500">Vorfälle</p>
-            <p className="text-5xl font-bold mt-2">{studentIncidents.length}</p>
-          </div>
-          <div className="bg-white rounded-3xl p-6 text-center shadow-sm">
-            <p className="text-slate-500">Ø Intensität</p>
-            <p className="text-5xl font-bold text-rose-600 mt-2">
-              {studentIncidents.length ? (studentIncidents.reduce((a,b)=>a+b.intensitaet,0)/studentIncidents.length).toFixed(1) : '—'}
-            </p>
-          </div>
-          <div className="bg-white rounded-3xl p-6 text-center shadow-sm">
-            <p className="text-slate-500">Ø Wirkung</p>
-            <p className="text-5xl font-bold text-emerald-600 mt-2">
-              {studentIncidents.length ? (studentIncidents.reduce((a,b)=>a+b.wirkung,0)/studentIncidents.length).toFixed(1) : '—'}
-            </p>
-          </div>
-        </div>
+<div className="grid md:grid-cols-3 gap-6 mb-10">
+  <div className="bg-white rounded-3xl p-6 text-center shadow-sm">
+    <p className="text-slate-500">Vorfälle</p>
+    <p className="text-5xl font-bold mt-2">{studentIncidents.length}</p>
+  </div>
+  
+  <div className="bg-white rounded-3xl p-6 text-center shadow-sm">
+    <p className="text-slate-500">Ø Intensität</p>
+    <p className="text-5xl font-bold text-rose-600 mt-2">
+      {(() => {
+        const valid = studentIncidents.filter(i => i.intensitaet > 0);
+        return valid.length 
+          ? (valid.reduce((sum, i) => sum + i.intensitaet, 0) / valid.length).toFixed(1) 
+          : '—';
+      })()}
+    </p>
+  </div>
+
+  <div className="bg-white rounded-3xl p-6 text-center shadow-sm">
+    <p className="text-slate-500">Ø Wirkung</p>
+    <p className="text-5xl font-bold text-emerald-600 mt-2">
+      {(() => {
+        const valid = studentIncidents.filter(i => i.wirkung > 0);
+        return valid.length 
+          ? (valid.reduce((sum, i) => sum + i.wirkung, 0) / valid.length).toFixed(1) 
+          : '—';
+      })()}
+    </p>
+  </div>
+</div>
 
         {/* Diagramm */}
         {studentIncidents.length > 0 && (
