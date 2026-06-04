@@ -205,25 +205,29 @@ const handleCancelConfirm = () => {
           />
         </div>
 
-        {/* Vorfall Codes */}
-        <div>
-          <label className="block text-sm font-medium mb-3">Art des Vorfalls (Mehrfachauswahl)</label>
-          <div className="flex flex-wrap gap-3">
-            {VORFALL_CODES.map(item => (
-              <button
-                type="button"
-                key={item.code}
-                onClick={() => toggleCode('vorfallCodes', item.code)}
-                className={`px-5 py-3 rounded-2xl text-sm font-medium transition-all border
-                  ${form.vorfallCodes.includes(item.code)
-                    ? 'bg-red-600 text-white border-red-600'
-                    : 'bg-white border-slate-300 hover:border-slate-400'}`}
-              >
-                <strong>{item.code}</strong> — {item.bedeutung}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* === VORFALL CODES === */}
+<div>
+  <label className="block text-sm font-medium mb-3">
+    Art des Vorfalls (Mehrfachauswahl)
+  </label>
+  <div className="flex flex-wrap gap-3">
+    {VORFALL_CODES.map(item => (
+      <button
+        type="button"
+        key={item.code}
+        onClick={() => toggleCode('vorfallCodes', item.code)}
+        className={`px-6 py-3.5 rounded-2xl text-sm font-medium border transition-all active:scale-95
+          ${form.vorfallCodes.includes(item.code)
+            ? 'bg-red-600 text-white border-red-600 shadow-md'
+            : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700'
+          }`}
+      >
+        <span className="font-semibold">{item.code}</span>
+        {item.bedeutung && ` — ${item.bedeutung}`}
+      </button>
+    ))}
+  </div>
+</div>
 
         {/* Beschreibung */}
         <div>
@@ -240,60 +244,63 @@ const handleCancelConfirm = () => {
           />
         </div>
 
-        {/* Maßnahmen */}
-        <div>
-          <label className="block text-sm font-medium mb-3">Ergriffene Maßnahmen</label>
-          <div className="flex flex-wrap gap-3">
-            {MASSNAHMEN_CODES.map((item) => {
-              const isSelected = form.massnahmenCodes.includes(item.code);
-              const farbe = MASSNAHMEN_FARBEN[item.code];     // Holt "amber" oder undefined
+        {/* === MASSNAHMEN === */}
+<div>
+  <label className="block text-sm font-medium mb-3">Ergriffene Maßnahmen</label>
+  <div className="flex flex-wrap gap-3">
+    {MASSNAHMEN_CODES.map((item) => {
+      const isSelected = form.massnahmenCodes.includes(item.code);
+      const farbe = MASSNAHMEN_FARBEN[item.code];
 
-              return (
-               <button
-                type="button"
-                key={item.code}
-                onClick={() => toggleCode('massnahmenCodes', item.code)}
-                className={`px-4 py-3 rounded-2xl text-sm font-medium border transition-all
-                  ${isSelected 
-                    ? farbe 
-                      ? `bg-amber-600 text-white border-amber-600 shadow-sm` 
-                      : `bg-emerald-600 text-white border-emerald-600`
-                    : farbe 
-                      ? `bg-amber-100 border-amber-200 hover:bg-amber-200 text-amber-800` 
-                      : `bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400`
-                  }`}
-                >
-                  {item.code} — {item.bedeutung}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      return (
+        <button
+          type="button"
+          key={item.code}
+          onClick={() => toggleCode('massnahmenCodes', item.code)}
+          className={`px-6 py-3.5 rounded-2xl text-sm font-medium border transition-all active:scale-95
+            ${isSelected
+              ? farbe
+                ? `bg-amber-600 text-white border-amber-600 shadow-md`
+                : `bg-emerald-600 text-white border-emerald-600 shadow-md`
+              : farbe
+                ? `bg-amber-100 border-amber-200 hover:bg-amber-200 text-amber-800`
+                : `bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 text-slate-700`
+            }`}
+        >
+          <span className="font-semibold">{item.code}</span>
+          {item.bedeutung && ` — ${item.bedeutung}`}
+        </button>
+      );
+    })}
+  </div>
+</div>
 
-        {/* Schulbegleiter */}
-        <div>
-          <label className="block text-sm font-medium mb-3">Schulbegleiter</label>
-          <div className="grid grid-cols-2 gap-3">
-            {SCHULBEGLEITER_CODES.map(item => (
-              <label
-                key={item.code}
-                className={`flex items-center gap-2 p-4 border rounded-2xl cursor-pointer transition-all
-                  ${form.schulbegleiterCode === item.code
-                    ? 'bg-blue-100 border-blue-600'
-                    : 'bg-white border-slate-300 hover:border-slate-400'}`}
-              >
-                <input
-                  type="radio"
-                  name="schulbegleiter"
-                  checked={form.schulbegleiterCode === item.code}
-                  onChange={() => setForm({ ...form, schulbegleiterCode: item.code })}
-                  className="hidden"
-                />
-                <span>{item.code} – {item.bedeutung}</span>
-              </label>
-            ))}
-          </div>
-        </div>
+{/* === SCHULBEGLEITER (bereits gut, nur leicht angepasst) === */}
+<div className="mb-6">
+  <label className="block text-sm font-medium text-slate-700 mb-3">
+    Schulbegleiter-Einsatz
+  </label>
+  <div className="flex flex-wrap gap-3">
+    {SCHULBEGLEITER_CODES.map((item) => (
+      <button
+        key={item.code}
+        type="button"
+        onClick={() => setForm(prev => ({
+          ...prev,
+          schulbegleiterCode: prev.schulbegleiterCode === item.code ? '' : item.code
+        }))}
+        className={`px-6 py-3.5 rounded-2xl text-sm font-medium border transition-all active:scale-95
+          ${form.schulbegleiterCode === item.code
+            ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+            : 'bg-white border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700'
+          }`}
+      >
+        <span className="font-semibold">{item.code}</span>
+        {item.bedeutung && ` — ${item.bedeutung}`}
+      </button>
+    ))}
+  </div>
+</div>
 
         {/* Skalen */}
         <div className="grid md:grid-cols-3 gap-8">

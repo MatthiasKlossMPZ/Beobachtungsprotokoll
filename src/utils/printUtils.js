@@ -51,107 +51,166 @@ const intensityColors = {
   4: [225, 29, 72]    // rot
 };
 
-// ==================== EINZELPROTOKOLL ====================
-export const printSingleIncident = async (incident, studentName) => {
+// ==================== EINZELPROTOKOLL (mit festem Footer) ====================
+export const printSingleIncident = async (incident, studentName, studentKlasse = '') => {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  let y = 22;
+  let y = 20;
 
-  // HEADER
-  doc.setFontSize(24);
+  // ==================== HEADER ====================
+  doc.setFillColor(30, 64, 175);
+  doc.rect(0, 0, 210, 28, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.setFont("helvetica", "bold");
+  doc.text('BEOBACHTUNGSPROTOKOLL', 20, 18);
+
+  doc.setFontSize(11);
+  doc.setTextColor(220, 220, 255);
+  doc.text('Einzelfall-Dokumentation', 20, 25);
+
+  y = 45;
+
+  // Schülername + Klasse
+  const fullName = studentKlasse 
+    ? `${studentName} (${studentKlasse})` 
+    : studentName;
+
   doc.setTextColor(30, 64, 175);
-  doc.text('Beobachtungsprotokoll', 20, y);
-  y += 12;
-  doc.setFontSize(15);
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text(fullName, 20, y);
+  y += 10;
+
+  doc.setDrawColor(30, 64, 175);
+  doc.setLineWidth(0.8);
+  doc.line(20, y, 190, y);
+  y += 20;
+
+  // ==================== VORFALL ====================
+  doc.setFontSize(14);
+  doc.setTextColor(220, 38, 38);
+  doc.setFont("helvetica", "bold");
+  doc.text('VORFALL', 20, y);
+  y += 8;
+
   doc.setTextColor(0);
-  doc.text(studentName, 20, y);
-  y += 18;
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
 
-  // Art des Vorfalls
-  doc.setFontSize(14);
-  doc.text('Art des Vorfalls', 20, y);
-  y += 8;
   const vorfallTexts = (incident.vorfallCodes || []).map(getVorfallText);
-  doc.setFontSize(12);
-  doc.text(vorfallTexts.join(' • '), 20, y);
-  y += 14;
+  let infoLine = vorfallTexts.join(' / ');
 
-  // Datum & Uhrzeit
   const datum = new Date(incident.datum);
-  doc.setFontSize(13);
-  doc.text('Datum & Uhrzeit', 20, y);
-  y += 8;
-  doc.setFontSize(12);
-  doc.text(
-    datum.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) +
-    ' • ' +
-    datum.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
-    20, y
-  );
-  y += 18;
+  const datumText = datum.toLocaleDateString('de-DE', { 
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' 
+  });
+  const uhrzeitText = datum.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
-  // Detaillierte Beschreibung
+  infoLine += ` • ${datumText} • ${uhrzeitText} Uhr`;
+
+  doc.text(infoLine, 20, y);
+  y += 20;
+
+  // ==================== BESCHREIBUNG ====================
   doc.setFontSize(14);
-  doc.text('Detaillierte Beschreibung', 20, y);
-  y += 9;
+  doc.setTextColor(30, 64, 175);
+  doc.setFont("helvetica", "bold");
+  doc.text('DETAILLIERTE BESCHREIBUNG', 20, y);
+  y += 8;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(0);
   doc.setFontSize(11.5);
-  const descLines = doc.splitTextToSize(incident.vorfallBeschreibung || 'Keine Beschreibung vorhanden.', 165);
+  
+  const descLines = doc.splitTextToSize(
+    incident.vorfallBeschreibung || 'Keine Beschreibung vorhanden.', 
+    165
+  );
   doc.text(descLines, 20, y);
   y += descLines.length * 6.8 + 16;
 
-  // Ergriffene Maßnahmen
+  // ==================== MASSNAHMEN ====================
   if (incident.massnahmenCodes?.length > 0) {
     doc.setFontSize(14);
-    doc.text('Ergriffene Maßnahmen', 20, y);
-    y += 9;
+    doc.setTextColor(34, 197, 151);
+    doc.setFont("helvetica", "bold");
+    doc.text('ER GRIFFENE MASSNAHMEN', 20, y);
+    y += 8;
+
     doc.setFontSize(11.5);
+    doc.setTextColor(0);
+    doc.setFont("helvetica", "normal");
+
     const massnahmenTexts = (incident.massnahmenCodes || []).map(getMassnahmeText);
-    doc.text('• ' + massnahmenTexts.join('\n• '), 20, y);
-    y += massnahmenTexts.length * 7.2 + 12;
+    massnahmenTexts.forEach(text => {
+      doc.text('• ' + text, 20, y);
+      y += 6.8;
+    });
+    y += 10;
   }
 
-// Schulbegleiter
-if (incident.schulbegleiterCode) {
+  // ==================== SCHULBEGLEITER ====================
+  if (incident.schulbegleiterCode) {
+    doc.setFontSize(14);
+    doc.setTextColor(59, 130, 246);
+    doc.setFont("helvetica", "bold");
+    doc.text('SCHULBEGLEITER-EINSATZ', 20, y);
+    y += 8;
+
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.setFont("helvetica", "normal");
+    doc.text(getSchulbegleiterFull(incident.schulbegleiterCode), 20, y);
+    y += 16;
+  }
+
+  // ==================== EINSCHÄTZUNGEN ====================
   doc.setFontSize(14);
-  doc.text('Schulbegleiter', 20, y);
-  y += 9;
-  doc.setFontSize(12);
-  doc.text(getSchulbegleiterFull(incident.schulbegleiterCode), 20, y);   // ← hier Full
-  y += 16;
-}
+  doc.setTextColor(30, 64, 175);
+  doc.setFont("helvetica", "bold");
+  doc.text('EINSCHÄTZUNGEN', 20, y);
+  y += 10;
 
-  // Einschätzungen
-  doc.setFontSize(14);
-  doc.text('Einschätzungen', 20, y);
-  y += 12;
-  doc.setFontSize(12);
+  doc.setFontSize(11.5);
+  doc.setFont("helvetica", "normal");
 
-  // Wiederholungsgefahr
-  doc.text('Wiederholungsgefahr', 25, y);
-  doc.text(`${incident.wiederholungsgefahr} – ${getWiederholungText(incident.wiederholungsgefahr)}`, 88, y);
-  y += 11;
+  const scales = [
+    { label: 'Wiederholungsgefahr', value: incident.wiederholungsgefahr, text: getWiederholungText(incident.wiederholungsgefahr) },
+    { label: 'Wirkung der Maßnahme', value: incident.wirkung, text: getWirkungText(incident.wirkung) },
+    { label: 'Intensität', value: incident.intensitaet, text: getIntensityText(incident.intensitaet) }
+  ];
 
-  // Wirkung der Maßnahme
-  doc.text('Wirkung der Maßnahme', 25, y);
-  doc.text(`${incident.wirkung} – ${getWirkungText(incident.wirkung)}`, 88, y);
-  y += 11;
+  scales.forEach((scale) => {
+    doc.setTextColor(0);
+    doc.text(scale.label + ':', 25, y);
+    
+    doc.setFont("helvetica", "bold");
+    const color = scale.label === 'Intensität' 
+      ? (intensityColors[scale.value] || [100,100,100]) 
+      : [30, 64, 175];
+    doc.setTextColor(...color);
+    
+    doc.text(`${scale.value} — ${scale.text}`, 105, y);
+    doc.setFont("helvetica", "normal");
+    y += 10.5;
+  });
 
-  // Intensität
-  doc.text('Intensität', 25, y);
-  const color = intensityColors[incident.intensitaet] || [100, 100, 100];
-  doc.setTextColor(...color);
-  doc.setFontSize(12.5);
-  doc.text(incident.intensitaet.toString(), 88, y);
-  doc.setTextColor(0);
-  doc.setFontSize(12);
-  doc.text(` – ${getIntensityText(incident.intensitaet)}`, 92, y);
-  y += 20;
+  // ==================== FESTER FOOTER (immer am unteren Rand) ====================
+  const footerY = 285;   // fester Abstand vom oberen Rand (A4 = 297mm)
 
-  // Footer
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.4);
+  doc.line(20, footerY - 6, 190, footerY - 6);
+
   doc.setFontSize(10);
-  doc.setTextColor(120);
-  doc.text('Erstellt mit dem digitalen Beobachtungsprotokoll', 20, y + 15);
+  doc.setTextColor(140);
+  doc.text('Erstellt mit dem digitalen Beobachtungsprotokoll', 20, footerY);
+  doc.text(new Date().toLocaleDateString('de-DE'), 170, footerY);
 
-  doc.save(`Protokoll_${studentName.replace(/\s+/g, '_')}_${new Date(incident.datum).toISOString().slice(0,10)}.pdf`);
+  // Datei speichern
+  const fileName = `Protokoll_${studentName.replace(/\s+/g, '_')}_${new Date(incident.datum).toISOString().slice(0,10)}.pdf`;
+  doc.save(fileName);
 };
 
 // ==================== GESAMTBERICHT ====================
