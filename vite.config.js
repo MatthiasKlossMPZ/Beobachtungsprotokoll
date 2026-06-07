@@ -7,9 +7,8 @@ export default defineConfig({
 
   plugins: [
     preact(),
-
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',           // ← Geändert: Besser als autoUpdate
       manifestFilename: 'manifest.json',
       injectRegister: 'script-defer',
 
@@ -20,48 +19,49 @@ export default defineConfig({
         description: "Digitales Beobachtungs- und Vorfallprotokoll für Schulen",
         start_url: "/Beobachtungsprotokoll/",
         scope: "/Beobachtungsprotokoll/",
-        
         display: "standalone",
         display_override: ["standalone", "minimal-ui"],
-        
         orientation: "portrait-primary",
         theme_color: "#1e40af",
         background_color: "#f8fafc",
         lang: "de",
-
         icons: [
-          { 
-            src: "/Beobachtungsprotokoll/pwa-192x192.png", 
-            sizes: "192x192", 
-            type: "image/png" 
-          },
-          { 
-            src: "/Beobachtungsprotokoll/pwa-512x512.png", 
-            sizes: "512x512", 
-            type: "image/png",
-            purpose: "any" 
-          },
-          { 
-            src: "/Beobachtungsprotokoll/pwa-512x512.png", 
-            sizes: "512x512", 
-            type: "image/png",
-            purpose: "maskable" 
-          }
+          { src: "/Beobachtungsprotokoll/pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "/Beobachtungsprotokoll/pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "/Beobachtungsprotokoll/pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
         ]
       },
 
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,pdf}',
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,svg,json,pdf}',
           'Bedienungsanleitung.pdf'
         ],
         navigateFallback: '/Beobachtungsprotokoll/index.html',
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+
+        // Wichtige Verbesserung für zuverlässige Updates:
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === 'document',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'html-cache' }
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.endsWith('.pdf'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'pdf-cache',
+              expiration: { maxEntries: 10 }
+            }
+          }
+        ]
       },
 
-      devOptions: { 
-        enabled: true 
+      devOptions: {
+        enabled: true
       }
     })
   ],
