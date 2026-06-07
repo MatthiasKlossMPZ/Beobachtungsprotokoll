@@ -140,14 +140,17 @@ export default function App() {
   };
 
   if (showModal) {
-    return (
+  return (
+    <>
       <PasswordModal
         onUnlock={handleUnlock}
         onSetNewPassword={handleSetNewPassword}
         isFirstSetup={isFirstSetup}
       />
-    );
-  }
+      <HelpButton /> 
+    </>
+  );
+}
 
     const handleLogout = () => {
     setUnlocked(false);

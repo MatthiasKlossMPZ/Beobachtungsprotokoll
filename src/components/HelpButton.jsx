@@ -6,7 +6,6 @@ export default function HelpButton() {
 
   return (
     <>
-      {/* Floating Button */}
       <button
         onClick={() => setShowModal(true)}
         style={{
@@ -34,7 +33,6 @@ export default function HelpButton() {
         ?
       </button>
 
-      {/* Modal */}
       <HelpModal isOpen={showModal} onClose={() => setShowModal(false)} />
     </>
   );
