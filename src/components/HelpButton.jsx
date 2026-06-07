@@ -1,39 +1,22 @@
+// src/components/HelpButton.jsx
 import { useState } from 'preact/hooks';
 import HelpModal from './HelpModal';
 
 export default function HelpButton() {
-  const [showModal, setShowModal] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   return (
     <>
       <button
-        onClick={() => setShowModal(true)}
-        style={{
-          position: 'fixed',
-          bottom: '80px',
-          right: '20px',
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          backgroundColor: '#3b82f6',
-          color: 'white',
-          border: 'none',
-          boxShadow: '0 6px 16px rgba(59, 130, 246, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '34px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          zIndex: 1000,
-          transition: 'all 0.2s ease'
-        }}
-        title="Bedienungsanleitung öffnen"
+        onClick={() => setShowHelp(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white text-4xl rounded-full shadow-2xl flex items-center justify-center z-[1100] transition-all active:scale-95"
+        title="Bedienungsanleitung"
+        aria-label="Hilfe"
       >
         ?
       </button>
 
-      <HelpModal isOpen={showModal} onClose={() => setShowModal(false)} />
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </>
   );
 }

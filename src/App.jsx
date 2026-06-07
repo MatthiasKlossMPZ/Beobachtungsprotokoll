@@ -139,7 +139,15 @@ export default function App() {
     }
   };
 
-  if (showModal) {
+  useEffect(() => {
+    const handleError = (event) => {
+      console.error('Globaler Fehler:', event.error);
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+if (showModal) {
   return (
     <>
       <PasswordModal
@@ -147,7 +155,7 @@ export default function App() {
         onSetNewPassword={handleSetNewPassword}
         isFirstSetup={isFirstSetup}
       />
-      <HelpButton /> 
+      <HelpButton />
     </>
   );
 }
