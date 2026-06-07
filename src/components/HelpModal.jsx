@@ -20,7 +20,10 @@ export default function HelpModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/95 z-[9999] flex items-center justify-center p-4">
+    <div 
+      className="fixed inset-0 bg-black/95 flex items-center justify-center p-4" 
+      style={{ zIndex: 99999 }}
+    >
       <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-6xl max-h-[96vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header */}
@@ -37,7 +40,7 @@ export default function HelpModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* PDF-Bereich */}
+        {/* PDF Viewer */}
         <div className="flex-1 relative bg-slate-100 min-h-[65vh] overflow-hidden">
           <iframe
             src={pdfUrl}

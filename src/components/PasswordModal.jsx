@@ -60,7 +60,7 @@ export default function PasswordModal({
   return (
     <>
       {/* Haupt-Login Modal */}
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[90] backdrop-blur-md">
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[50] backdrop-blur-md">
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-2xl w-full max-w-md mx-4">
           
           {/* Header */}
@@ -133,7 +133,7 @@ export default function PasswordModal({
 
       {/* === Bestätigungs-Modal === */}
       {showResetConfirm && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[95] backdrop-blur-md">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] backdrop-blur-md">
           <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-2xl w-full max-w-md mx-4">
             <div className="text-center">
               <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6">
