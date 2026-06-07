@@ -8,6 +8,7 @@ import IncidentForm from './components/IncidentForm.jsx';
 import PasswordModal from './components/PasswordModal.jsx';
 import BackupModal from './components/BackupModal.jsx';
 import ConfirmModal from './components/ConfirmModal.jsx';
+import HelpButton from './components/HelpButton';
 
 import { db, getDB } from './db.js';
 
@@ -171,7 +172,7 @@ export default function App() {
       
       <div>
         <h1 className="text-2xl font-bold">Beobachtungsprotokoll</h1>
-        <p className="text-xs text-blue-200 -mt-1">v0.94</p>
+        <p className="text-xs text-blue-200 -mt-1">v0.95b</p>
       </div>
     </div>
 
@@ -278,6 +279,10 @@ export default function App() {
         <p className="hidden sm:block">Alle Daten bleiben lokal auf diesem Gerät</p>
       </div>
     </footer>
+
+    {/* Floating Help Button */}
+      <HelpButton />
+
     </div>
 );
 }

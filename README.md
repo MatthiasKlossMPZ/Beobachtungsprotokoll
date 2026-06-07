@@ -4,8 +4,6 @@ Ein **datenschutzkonformes digitales Beobachtungs- und Vorfallprotokoll** für S
 
 Entwickelt, um Lehrkräfte und Schulbegleiter bei der strukturierten Dokumentation von Vorfällen zu unterstützen – mit Fokus auf Übersichtlichkeit, Datenschutz und einfacher Bedienung.
 
-![Screenshot](screenshot.png)
-
 ## ✨ Funktionen
 
 - **Verschlüsselte lokale Speicherung** (IndexedDB + AES-GCM)
