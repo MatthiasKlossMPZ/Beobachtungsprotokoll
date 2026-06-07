@@ -1,8 +1,10 @@
 // src/components/HelpModal.jsx
-import { useState } from 'preact/hooks';
+import { useState, useRef, useEffect } from 'preact/hooks';
 
 export default function HelpModal({ isOpen, onClose }) {
   const [loadError, setLoadError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const iframeRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -19,6 +21,10 @@ export default function HelpModal({ isOpen, onClose }) {
     document.body.removeChild(link);
   };
 
+  useEffect(() => {
+    if (isOpen) setIsLoading(true);
+  }, [isOpen]);
+
   return (
     <div 
       className="fixed inset-0 bg-black/95 flex items-center justify-center p-4" 
@@ -27,7 +33,7 @@ export default function HelpModal({ isOpen, onClose }) {
       <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-6xl max-h-[96vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b flex items-center justify-between">
+        <div className="px-6 py-4 border-b flex items-center justify-between bg-white dark:bg-slate-900">
           <div>
             <h2 className="text-2xl font-semibold">Bedienungsanleitung</h2>
             <p className="text-sm text-slate-500">Beobachtungsprotokoll v0.96b</p>
@@ -42,11 +48,25 @@ export default function HelpModal({ isOpen, onClose }) {
 
         {/* PDF Viewer */}
         <div className="flex-1 relative bg-slate-100 min-h-[65vh] overflow-hidden">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/80">
+              <div className="text-center">
+                <div className="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p>Lade Bedienungsanleitung...</p>
+              </div>
+            </div>
+          )}
+
           <iframe
+            ref={iframeRef}
             src={pdfUrl}
             className="absolute inset-0 w-full h-full border-0"
             title="Bedienungsanleitung"
-            onError={() => setLoadError(true)}
+            onLoad={() => setIsLoading(false)}
+            onError={() => {
+              setIsLoading(false);
+              setLoadError(true);
+            }}
           />
 
           {loadError && (
@@ -61,8 +81,8 @@ export default function HelpModal({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-          <p>Tipp: Mit zwei Fingern zoomen oder in neuem Tab öffnen</p>
+        <div className="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500 bg-white dark:bg-slate-900">
+          <p>Tipp: Auf mobilen Geräten mit zwei Fingern zoomen</p>
           <div className="flex gap-3">
             <button onClick={openInNewTab} className="px-5 py-2 border rounded-xl hover:bg-slate-100">Neuer Tab</button>
             <button onClick={downloadPdf} className="px-5 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">Herunterladen</button>
