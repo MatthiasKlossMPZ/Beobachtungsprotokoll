@@ -172,7 +172,7 @@ export default function App() {
       
       <div>
         <h1 className="text-2xl font-bold">Beobachtungsprotokoll</h1>
-        <p className="text-xs text-blue-200 -mt-1">v0.95b</p>
+        <p className="text-xs text-blue-200 -mt-1">v0.96b</p>
       </div>
     </div>
 
@@ -231,7 +231,7 @@ export default function App() {
   students={students}
   incidents={incidents}
   onSave={saveIncident}
-  onCancel={(studentId) => route(`/student/${studentId}`)}   // studentId kommt aus URL
+  onCancel={(studentId) => route(`/student/${studentId}`)}
 />
 
 {/* Vorfall bearbeiten */}
