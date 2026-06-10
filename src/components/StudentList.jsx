@@ -32,11 +32,12 @@ export default function StudentList({ students = [], incidents = [], refresh, sa
     setEditingStudent(null);
   };
 
-    const deleteStudent = (student) => {
+      const deleteStudent = (student) => {
+    console.log('🗑️ deleteStudent aufgerufen – onDeleteStudent existiert?', !!onDeleteStudent);
     if (onDeleteStudent) {
-      onDeleteStudent(student);   // Schönes Modal aufrufen
+      onDeleteStudent(student);
     } else {
-      // Fallback (sollte nicht passieren)
+      // Fallback (nur für Notfälle)
       if (confirm(`Soll "${student.name}" wirklich gelöscht werden?`)) {
         const updated = students.filter(s => s.id !== student.id);
         saveStudents(updated);

@@ -234,7 +234,34 @@ async deleteIncident(incidentId) {
 
   console.log(`✅ Vorfall ${incidentId} gelöscht`);
   return true;
-}
+},
+
+  // ==================== DELETE STUDENT ====================
+  async deleteStudent(studentId) {
+    if (!encryptionKey) throw new Error('Database not unlocked');
+
+    const dbInstance = await getDB();
+    const encryptedData = await dbInstance.get(STORE_NAME, 'data');
+    let current = await decrypt(encryptedData, encryptionKey);
+
+    // Schüler löschen
+    const initialStudentCount = current.students.length;
+    current.students = current.students.filter(s => s.id !== studentId);
+
+    if (current.students.length === initialStudentCount) {
+      throw new Error('Schüler nicht gefunden');
+    }
+
+    // Zugehörige Vorfälle ebenfalls löschen (wie im Modal angekündigt)
+    current.incidents = current.incidents.filter(inc => inc.studentId !== studentId);
+
+    // Wieder verschlüsseln und speichern
+    const newEncrypted = await encrypt(current, encryptionKey);
+    await dbInstance.put(STORE_NAME, newEncrypted, 'data');
+
+    console.log(`✅ Schüler ${studentId} und zugehörige Vorfälle gelöscht`);
+    return true;
+  },
 
 };
 
