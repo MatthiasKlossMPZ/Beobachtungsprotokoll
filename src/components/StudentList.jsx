@@ -2,7 +2,7 @@ import { Link } from 'preact-router';
 import { useState } from 'preact/hooks';
 import EditStudentModal from './EditStudentModal.jsx';
 
-export default function StudentList({ students = [], incidents = [], refresh, saveStudents }) {
+export default function StudentList({ students = [], incidents = [], refresh, saveStudents, onDeleteStudent }) {
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentKlasse, setNewStudentKlasse] = useState('');
   const [editingStudent, setEditingStudent] = useState(null);
@@ -32,11 +32,17 @@ export default function StudentList({ students = [], incidents = [], refresh, sa
     setEditingStudent(null);
   };
 
-  const deleteStudent = async (student) => {
-    if (!confirm(`Soll "${student.name}" wirklich gelöscht werden?\n\nAlle Vorfälle bleiben erhalten.`)) return;
-    const updated = students.filter(s => s.id !== student.id);
-    await saveStudents(updated);
-    if (typeof refresh === 'function') refresh();
+    const deleteStudent = (student) => {
+    if (onDeleteStudent) {
+      onDeleteStudent(student);   // Schönes Modal aufrufen
+    } else {
+      // Fallback (sollte nicht passieren)
+      if (confirm(`Soll "${student.name}" wirklich gelöscht werden?`)) {
+        const updated = students.filter(s => s.id !== student.id);
+        saveStudents(updated);
+        if (typeof refresh === 'function') refresh();
+      }
+    }
   };
 
   const getLastIncident = (studentId) => {

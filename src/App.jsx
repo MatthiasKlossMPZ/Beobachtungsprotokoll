@@ -22,10 +22,11 @@ export default function App() {
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [incidentToDelete, setIncidentToDelete] = useState(null);
   const [currentStudentId, setCurrentStudentId] = useState(null);
+  const [showStudentDeleteModal, setShowStudentDeleteModal] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
 
   // Online/Offline
   useEffect(() => {
@@ -158,6 +159,29 @@ export default function App() {
     }
   };
 
+    const requestDeleteStudent = (student) => {
+    setStudentToDelete(student);
+    setShowStudentDeleteModal(true);
+  };
+
+  const confirmDeleteStudent = async () => {
+    if (!studentToDelete) return;
+
+    try {
+      await db.deleteStudent(studentToDelete.id);
+      await refreshData();
+
+      setSuccessMessage(`✅ Der Schüler "${studentToDelete.name}" wurde erfolgreich gelöscht.`);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Fehler beim Löschen des Schülers:', error);
+      alert('❌ Fehler beim Löschen des Schülers.');
+    } finally {
+      setShowStudentDeleteModal(false);
+      setStudentToDelete(null);
+    }
+  };
+
   const saveStudents = async (newStudents) => {
     if (!unlocked) return;
     try {
@@ -245,6 +269,7 @@ if (showModal) {
             incidents={incidents} 
             refresh={refreshData} 
             saveStudents={saveStudents} 
+            onDeleteStudent={requestDeleteStudent}
           />
           <Route 
             path="/student/:id" 
@@ -326,6 +351,23 @@ if (showModal) {
           onCancel={() => {
             setShowDeleteModal(false);
             setIncidentToDelete(null);
+          }}
+          danger={true}
+        />
+      )}
+
+            {/* Student Delete Confirm Modal */}
+      {showStudentDeleteModal && studentToDelete && (
+        <ConfirmModal
+          isOpen={true}
+          title="Schüler löschen"
+          message={`Soll der Schüler "${studentToDelete.name}" wirklich GELÖSCHT werden?\n\nAlle zugehörigen Vorfälle werden ebenfalls gelöscht!\n\nDiese Aktion kann NICHT rückgängig gemacht werden!`}
+          confirmText="Ja, löschen"
+          cancelText="Abbrechen"
+          onConfirm={confirmDeleteStudent}
+          onCancel={() => {
+            setShowStudentDeleteModal(false);
+            setStudentToDelete(null);
           }}
           danger={true}
         />
