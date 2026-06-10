@@ -183,7 +183,7 @@ if (showModal) {
       
       <div>
         <h1 className="text-2xl font-bold">Beobachtungsprotokoll</h1>
-        <p className="text-xs text-blue-200 -mt-1">v0.98</p>
+        <p className="text-xs text-blue-200 -mt-1">v0.98b</p>
       </div>
     </div>
 
@@ -223,6 +223,7 @@ if (showModal) {
             component={StudentDetail} 
             students={students} 
             incidents={incidents} 
+            refresh={refreshData}
           />
 
 {/* Neuer Vorfall (allgemein) */}

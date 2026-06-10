@@ -9,7 +9,7 @@ import {
 } from '../utils/printUtils.js';
 import { db } from '../db.js';
 
-export default function StudentDetail({ students = [], incidents = [], id }) {
+export default function StudentDetail({ students = [], incidents = [], id, refresh }) {
   const [student, setStudent] = useState(null);
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
@@ -163,7 +163,7 @@ useEffect(() => {
     }
   };
 
-  // ==================== LÖSCH-FUNKTION ====================
+    // ==================== LÖSCH-FUNKTION ====================
   const handleDeleteIncident = async (incident) => {
     const confirmText = `Soll der Vorfall vom ${new Date(incident.datum).toLocaleDateString('de-DE')} wirklich GELÖSCHT werden?\n\nDiese Aktion kann NICHT rückgängig gemacht werden!`;
 
@@ -171,8 +171,16 @@ useEffect(() => {
 
     try {
       await db.deleteIncident(incident.id);
+      
       alert('✅ Der Vorfall wurde erfolgreich gelöscht.');
-      window.location.reload();
+      
+      // Refresh bevorzugen, falls verfügbar
+      if (refresh) {
+        await refresh();
+      } else {
+        route(`/student/${id}`);
+      }
+      
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       alert('❌ Fehler beim Löschen des Vorfalls.');
