@@ -23,6 +23,10 @@ export default function App() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [incidentToDelete, setIncidentToDelete] = useState(null);
+  const [currentStudentId, setCurrentStudentId] = useState(null);
+
   // Online/Offline
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -129,6 +133,31 @@ export default function App() {
   }
 };
 
+  const requestDeleteIncident = (incident, studentId) => {
+    setIncidentToDelete(incident);
+    setCurrentStudentId(studentId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteIncident = async () => {
+    if (!incidentToDelete) return;
+
+    try {
+      await db.deleteIncident(incidentToDelete.id);
+      await refreshData();
+
+      setSuccessMessage("✅ Der Vorfall wurde erfolgreich gelöscht.");
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      alert('❌ Fehler beim Löschen des Vorfalls.'); // Fallback
+    } finally {
+      setShowDeleteModal(false);
+      setIncidentToDelete(null);
+      setCurrentStudentId(null);
+    }
+  };
+
   const saveStudents = async (newStudents) => {
     if (!unlocked) return;
     try {
@@ -187,7 +216,6 @@ if (showModal) {
       </div>
     </div>
 
-    {/* Rest bleibt gleich */}
     <div className="flex items-center gap-3 text-sm">
       <span className={`px-3 py-1 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}>
         {isOnline ? 'Online' : 'Offline'}
@@ -223,6 +251,7 @@ if (showModal) {
             component={StudentDetail} 
             students={students} 
             incidents={incidents} 
+            onDelete={requestDeleteIncident}
             refresh={refreshData}
           />
 
@@ -284,6 +313,24 @@ if (showModal) {
           danger={false}
         />
       )}
+
+      {/* Delete Confirm Modal */}
+      {showDeleteModal && incidentToDelete && (
+        <ConfirmModal
+          isOpen={true}
+          title="Vorfall löschen"
+          message={`Soll der Vorfall vom ${new Date(incidentToDelete.datum).toLocaleDateString('de-DE')} wirklich GELÖSCHT werden?\n\nDiese Aktion kann NICHT rückgängig gemacht werden!`}
+          confirmText="Ja, löschen"
+          cancelText="Abbrechen"
+          onConfirm={confirmDeleteIncident}
+          onCancel={() => {
+            setShowDeleteModal(false);
+            setIncidentToDelete(null);
+          }}
+          danger={true}
+        />
+      )}
+
       {/* Copyright Footer */}
     <footer className="mt-auto fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 text-center text-xs text-slate-500 z-50">
       <div className="max-w-5xl mx-auto px-6 flex justify-between items-center">
