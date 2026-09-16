@@ -1,11 +1,7 @@
 {
   "name": "beobachtungsprotokoll",
   "private": true,
-<<<<<<< HEAD
-  "version": "0.0.0",
-=======
-  "version": "1.0.0",
->>>>>>> 0c6f527 (Passwortregeln und Version 1.0)
+  "version": "1.00",
   "type": "module",
   "scripts": {
     "dev": "vite",
