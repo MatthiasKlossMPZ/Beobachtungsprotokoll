@@ -36,7 +36,7 @@ export default function HelpModal({ isOpen, onClose }) {
         <div className="px-6 py-4 border-b flex items-center justify-between bg-white dark:bg-slate-900">
           <div>
             <h2 className="text-2xl font-semibold">Bedienungsanleitung</h2>
-            <p className="text-sm text-slate-500">Beobachtungsprotokoll v0.96b</p>
+            <p className="text-sm text-slate-500">Beobachtungsprotokoll v1.00</p>
           </div>
           <button
             onClick={onClose}
