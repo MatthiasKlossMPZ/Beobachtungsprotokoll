@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { db } from '../db.js';
+import { getPasswordChecks, validatePassword } from '../utils/passwordPolicy';
 
 export default function BackupModal({ onClose }) {
   const [mode, setMode] = useState('export'); // 'export' | 'import'
@@ -9,13 +10,22 @@ export default function BackupModal({ onClose }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState('');
 
+  const checks = getPasswordChecks(backupPassword);
+
   const handleExport = async () => {
     if (!backupPassword) {
       setMessage('Bitte ein Backup-Passwort eingeben.');
       return;
     }
-    if (backupPassword.length < 6) {
-      setMessage('Das Backup-Passwort sollte mindestens 6 Zeichen lang sein.');
+
+    const { ok, message: policyMessage } = validatePassword(backupPassword);
+    if (!ok) {
+      setMessage(policyMessage);
+      return;
+    }
+
+    if (backupPassword !== confirmPassword) {
+      setMessage('Passwörter stimmen nicht überein.');
       return;
     }
 
@@ -61,6 +71,12 @@ export default function BackupModal({ onClose }) {
     }
   };
 
+  const CheckItem = ({ ok, label }) => (
+    <li className={ok ? 'text-emerald-600' : 'text-slate-500'}>
+      {ok ? '✓' : '○'} {label}
+    </li>
+  );
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden">
@@ -73,13 +89,19 @@ export default function BackupModal({ onClose }) {
           {/* Tabs */}
           <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6">
             <button
-              onClick={() => setMode('export')}
+              onClick={() => {
+                setMode('export');
+                setMessage('');
+              }}
               className={`flex-1 py-3 text-center font-medium rounded-t-xl ${mode === 'export' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               Backup erstellen
             </button>
             <button
-              onClick={() => setMode('import')}
+              onClick={() => {
+                setMode('import');
+                setMessage('');
+              }}
               className={`flex-1 py-3 text-center font-medium rounded-t-xl ${mode === 'import' ? 'bg-blue-100 dark:bg-blue-900 text-blue-700' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               Backup einspielen
@@ -95,8 +117,30 @@ export default function BackupModal({ onClose }) {
                 type="password"
                 placeholder="Backup-Passwort"
                 value={backupPassword}
-                onInput={(e) => setBackupPassword(e.target.value)}
+                onInput={(e) => {
+                  setBackupPassword(e.target.value);
+                  if (message) setMessage('');
+                }}
                 className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-2xl focus:outline-none focus:border-blue-500"
+                autoComplete="new-password"
+              />
+              <ul className="text-sm space-y-1 px-1">
+                <CheckItem ok={checks.length} label="mindestens 12 Zeichen" />
+                <CheckItem ok={checks.upper} label="einen Großbuchstaben" />
+                <CheckItem ok={checks.lower} label="einen Kleinbuchstaben" />
+                <CheckItem ok={checks.digit} label="eine Ziffer" />
+                <CheckItem ok={checks.special} label="ein Sonderzeichen" />
+              </ul>
+              <input
+                type="password"
+                placeholder="Backup-Passwort bestätigen"
+                value={confirmPassword}
+                onInput={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (message) setMessage('');
+                }}
+                className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-2xl focus:outline-none focus:border-blue-500"
+                autoComplete="new-password"
               />
               <button
                 onClick={handleExport}
@@ -113,7 +157,7 @@ export default function BackupModal({ onClose }) {
               <p className="text-amber-600 dark:text-amber-400 font-medium">
                 ⚠️ Alle aktuellen Daten werden ersetzt!
               </p>
-              
+
               <input
                 type="file"
                 accept=".enc.json"
@@ -127,6 +171,7 @@ export default function BackupModal({ onClose }) {
                 value={backupPassword}
                 onInput={(e) => setBackupPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-2xl focus:outline-none focus:border-blue-500"
+                autoComplete="current-password"
               />
 
               <button

@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { resetAppData } from '../db';
+import { getPasswordChecks, validatePassword } from '../utils/passwordPolicy';
 
 export default function PasswordModal({
   onUnlock,
@@ -13,6 +14,8 @@ export default function PasswordModal({
   const [resetLoading, setResetLoading] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  const checks = getPasswordChecks(password);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -24,14 +27,21 @@ export default function PasswordModal({
           setError('Passwörter stimmen nicht überein');
           return;
         }
+
+        const { ok, message } = validatePassword(password);
+        if (!ok) {
+          setError(message);
+          return;
+        }
+
         await onSetNewPassword(password);
       } else {
         await onUnlock(password);
       }
     } catch (err) {
       console.error(err);
-      setError(isFirstSetup 
-        ? 'Fehler beim Setzen des Passworts' 
+      setError(isFirstSetup
+        ? (err?.message || 'Fehler beim Setzen des Passworts')
         : 'Falsches Passwort');
     } finally {
       setLoading(false);
@@ -57,12 +67,18 @@ export default function PasswordModal({
     }
   };
 
+  const CheckItem = ({ ok, label }) => (
+    <li className={ok ? 'text-emerald-600' : 'text-slate-500'}>
+      {ok ? '✓' : '○'} {label}
+    </li>
+  );
+
   return (
     <>
       {/* Haupt-Login Modal */}
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[50] backdrop-blur-md">
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-2xl w-full max-w-md mx-4">
-          
+
           {/* Header */}
           <div className="text-center mb-8">
             <div className="text-5xl mb-4">🔐</div>
@@ -70,8 +86,8 @@ export default function PasswordModal({
               {isFirstSetup ? 'Passwort festlegen' : 'App entsperren'}
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mt-2">
-              {isFirstSetup 
-                ? 'Dieses Passwort schützt alle deine Daten' 
+              {isFirstSetup
+                ? 'Dieses Passwort schützt alle deine Daten'
                 : 'Gib dein Passwort ein'}
             </p>
           </div>
@@ -80,22 +96,40 @@ export default function PasswordModal({
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => {
+                setPassword(e.target.value);
+                if (error) setError('');
+              }}
               placeholder="Passwort"
               className="w-full px-5 py-4 border border-slate-300 dark:border-slate-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
               autoFocus
               required
+              autoComplete={isFirstSetup ? 'new-password' : 'current-password'}
             />
 
             {isFirstSetup && (
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                placeholder="Passwort bestätigen"
-                className="w-full px-5 py-4 border border-slate-300 dark:border-slate-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6"
-                required
-              />
+              <>
+                <ul className="text-sm mb-4 space-y-1 px-1">
+                  <CheckItem ok={checks.length} label="mindestens 12 Zeichen" />
+                  <CheckItem ok={checks.upper} label="einen Großbuchstaben" />
+                  <CheckItem ok={checks.lower} label="einen Kleinbuchstaben" />
+                  <CheckItem ok={checks.digit} label="eine Ziffer" />
+                  <CheckItem ok={checks.special} label="ein Sonderzeichen" />
+                </ul>
+
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => {
+                    setConfirmPassword(e.target.value);
+                    if (error) setError('');
+                  }}
+                  placeholder="Passwort bestätigen"
+                  className="w-full px-5 py-4 border border-slate-300 dark:border-slate-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                  required
+                  autoComplete="new-password"
+                />
+              </>
             )}
 
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}

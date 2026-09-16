@@ -1,4 +1,5 @@
 import { openDB } from 'idb';
+import { validatePassword } from './utils/passwordPolicy';
 
 // ============== Konstanten ==============
 const DB_NAME = 'BeobachtungsprotokollDB';
@@ -40,6 +41,11 @@ async function decrypt(combined, key) {
   return JSON.parse(new TextDecoder().decode(decrypted));
 }
 
+function assertStrongPassword(password) {
+  const { ok, message } = validatePassword(password);
+  if (!ok) throw new Error(message);
+}
+
 // ============== getDB ==============
 async function getDB() {
   if (!dbPromise) {
@@ -79,6 +85,8 @@ export async function resetAppData() {
 // ============== Haupt-DB API ==============
 export const db = {
   async initPassword(password) {
+    assertStrongPassword(password);
+
     const salt = crypto.getRandomValues(new Uint8Array(16));
     encryptionKey = await deriveKey(password, salt);
 
@@ -149,9 +157,9 @@ export const db = {
     const data = await dbInstance.get(STORE_NAME, 'data');
     const salt = await dbInstance.get(STORE_NAME, 'salt');
 
-    const blob = new Blob([JSON.stringify({ 
-      data: Array.from(data), 
-      salt: Array.from(salt) 
+    const blob = new Blob([JSON.stringify({
+      data: Array.from(data),
+      salt: Array.from(salt)
     })], { type: 'application/json' });
 
     const url = URL.createObjectURL(blob);
@@ -160,10 +168,11 @@ export const db = {
     a.download = `beobachtungsprotokoll_backup_${new Date().toISOString().slice(0,10)}.enc.json`;
     a.click();
   },
-  
+
     // ==================== BACKUP & RESTORE ====================
   async exportBackup(backupPassword) {
     if (!encryptionKey) throw new Error('Datenbank muss entsperrt sein');
+    assertStrongPassword(backupPassword);
 
     const dbInstance = await getDB();
     const encryptedData = await dbInstance.get(STORE_NAME, 'data');
@@ -171,10 +180,10 @@ export const db = {
 
     // Backup mit eigenem Passwort verschlüsseln
     const backupKey = await deriveKey(backupPassword, salt);
-    const backupEncrypted = await encrypt({ 
-      version: 1, 
+    const backupEncrypted = await encrypt({
+      version: 1,
       timestamp: new Date().toISOString(),
-      data: Array.from(encryptedData) 
+      data: Array.from(encryptedData)
     }, backupKey);
 
     const backupBlob = new Blob([JSON.stringify({
