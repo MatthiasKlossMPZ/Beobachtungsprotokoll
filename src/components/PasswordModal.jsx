@@ -96,7 +96,7 @@ export default function PasswordModal({
             <input
               type="password"
               value={password}
-              onChange={e => {
+              onInput={e => {
                 setPassword(e.target.value);
                 if (error) setError('');
               }}
@@ -120,7 +120,7 @@ export default function PasswordModal({
                 <input
                   type="password"
                   value={confirmPassword}
-                  onChange={e => {
+                  onInput={e => {
                     setConfirmPassword(e.target.value);
                     if (error) setError('');
                   }}
