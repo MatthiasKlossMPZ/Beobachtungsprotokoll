@@ -78,7 +78,7 @@ define(['./workbox-26b8999e'], (function (workbox) { 'use strict';
    */
   workbox.precacheAndRoute([{
     "url": "/Beobachtungsprotokoll/index.html",
-    "revision": "0.av6vrqqsa34"
+    "revision": "0.j6lg9jk259k"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/Beobachtungsprotokoll/index.html"), {

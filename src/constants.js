@@ -5,6 +5,7 @@ export const VORFALL_CODES = [
   { code: "TD", bedeutung: "Tötungsandrohung" },
   { code: "DI", bedeutung: "Diffamierung" },
   { code: "EX", bedeutung: "Extremistischer Hintergrund" }
+  { code: "VW", bedeutung: "Verweigerung / Ablehnung" }
 ];
 
 export const MASSNAHMEN_CODES = [
