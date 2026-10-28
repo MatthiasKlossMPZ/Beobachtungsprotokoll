@@ -169,56 +169,179 @@ export const db = {
     a.click();
   },
 
-    // ==================== BACKUP & RESTORE ====================
-  async exportBackup(backupPassword) {
-    if (!encryptionKey) throw new Error('Datenbank muss entsperrt sein');
-    assertStrongPassword(backupPassword);
+// ==================== BACKUP & RESTORE ====================
 
-    const dbInstance = await getDB();
-    const encryptedData = await dbInstance.get(STORE_NAME, 'data');
-    const salt = await dbInstance.get(STORE_NAME, 'salt');
+async exportBackup(backupPassword) {
+  if (!encryptionKey) throw new Error('Datenbank muss entsperrt sein');
+  assertStrongPassword(backupPassword);
 
-    // Backup mit eigenem Passwort verschlüsseln
-    const backupKey = await deriveKey(backupPassword, salt);
-    const backupEncrypted = await encrypt({
-      version: 1,
-      timestamp: new Date().toISOString(),
-      data: Array.from(encryptedData)
-    }, backupKey);
+  const students = await this.getStudents();
+  const incidents = await this.getIncidents();
 
-    const backupBlob = new Blob([JSON.stringify({
-      salt: Array.from(salt),
-      encrypted: Array.from(backupEncrypted)
-    })], { type: 'application/json' });
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const backupKey = await deriveKey(backupPassword, salt);
 
-    const url = URL.createObjectURL(backupBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `beobachtungsprotokoll_backup_${new Date().toISOString().slice(0,10)}.enc.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  },
+  const payload = {
+    version: 2,
+    timestamp: new Date().toISOString(),
+    students,
+    incidents
+  };
 
-  async importBackup(file, backupPassword) {
-    if (!file) throw new Error('Keine Datei ausgewählt');
+  const encrypted = await encrypt(payload, backupKey);
 
-    const text = await file.text();
-    const backup = JSON.parse(text);
+  const backupBlob = new Blob([JSON.stringify({
+    version: 2,
+    salt: Array.from(salt),
+    encrypted: Array.from(encrypted)
+  })], { type: 'application/json' });
 
+  const url = URL.createObjectURL(backupBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `beobachtungsprotokoll_backup_${new Date().toISOString().slice(0, 10)}.enc.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+},
+
+async importBackup(file, backupPassword) {
+  if (!encryptionKey) throw new Error('Datenbank muss entsperrt sein');
+  if (!file) throw new Error('Keine Datei ausgewählt');
+
+  const text = await file.text();
+  const backup = JSON.parse(text);
+
+  // === Neues Format (Version 2) ===
+  if (backup.version === 2) {
+    const data = await this._decryptBackupV2(backup, backupPassword);
+
+    await this.saveStudents(data.students || []);
+    await this.saveIncidents(data.incidents || []);
+
+    window.location.reload();
+    return;
+  }
+
+  // === Altes Format (ohne version oder version !== 2) ===
+  try {
     const salt = new Uint8Array(backup.salt);
     const backupKey = await deriveKey(backupPassword, salt);
-
     const encryptedData = new Uint8Array(backup.encrypted);
     const decrypted = await decrypt(encryptedData, backupKey);
 
-    // In aktuelle DB übernehmen
     const dbInstance = await getDB();
     await dbInstance.put(STORE_NAME, new Uint8Array(decrypted.data), 'data');
     await dbInstance.put(STORE_NAME, salt, 'salt');
 
-    // App neu starten
     window.location.reload();
-  },
+  } catch (err) {
+    console.error(err);
+    throw new Error('Backup konnte nicht gelesen werden. Falsches Passwort oder beschädigte Datei.');
+  }
+},
+
+async importMerge(file, backupPassword) {
+  if (!encryptionKey) throw new Error('Datenbank muss entsperrt sein');
+  if (!file) throw new Error('Keine Datei ausgewählt');
+
+  const text = await file.text();
+  const backup = JSON.parse(text);
+
+  if (backup.version !== 2) {
+    throw new Error('Dieses Backup-Format unterstützt keinen Teilimport. Bitte zuerst ein neues Backup erstellen.');
+  }
+
+  const backupData = await this._decryptBackupV2(backup, backupPassword);
+  const backupStudents = backupData.students || [];
+  const backupIncidents = backupData.incidents || [];
+
+  const localStudents = await this.getStudents();
+  const localIncidents = await this.getIncidents();
+
+  const normalize = (name) => name.trim().toLowerCase().replace(/\s+/g, ' ');
+
+  // Schüler-Mapping
+  const studentMap = new Map(); // backupId → localId
+  const localByName = new Map();
+  for (const s of localStudents) {
+    localByName.set(normalize(s.name), s);
+  }
+
+  const mergedStudents = [...localStudents];
+
+  for (const bs of backupStudents) {
+    const key = normalize(bs.name);
+    if (localByName.has(key)) {
+      studentMap.set(bs.id, localByName.get(key).id);
+    } else {
+      const newId = 's_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const newStudent = { ...bs, id: newId };
+      mergedStudents.push(newStudent);
+      localByName.set(key, newStudent);
+      studentMap.set(bs.id, newId);
+    }
+  }
+
+  // Fingerprint für Duplikat-Erkennung
+  const fingerprint = (inc) => [
+    inc.datum || '',
+    (inc.vorfallBeschreibung || '').trim(),
+    (inc.massnahmenBeschreibung || '').trim(),
+    JSON.stringify([...(inc.vorfallCodes || [])].sort()),
+    JSON.stringify([...(inc.massnahmenCodes || [])].sort()),
+    inc.schulbegleiterCode || '',
+    inc.wiederholungsgefahr ?? '',
+    inc.wirkung ?? '',
+    inc.intensitaet ?? ''
+  ].join('|');
+
+  const existing = new Set();
+  for (const inc of localIncidents) {
+    existing.add(inc.studentId + '|' + fingerprint(inc));
+  }
+
+  const mergedIncidents = [...localIncidents];
+  let added = 0;
+
+  for (const bi of backupIncidents) {
+    const localStudentId = studentMap.get(bi.studentId);
+    if (!localStudentId) continue;
+
+    const fp = localStudentId + '|' + fingerprint(bi);
+    if (existing.has(fp)) continue;
+
+    const newInc = {
+      ...bi,
+      id: 'inc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      studentId: localStudentId
+    };
+    mergedIncidents.push(newInc);
+    existing.add(fp);
+    added++;
+  }
+
+  await this.saveStudents(mergedStudents);
+  await this.saveIncidents(mergedIncidents);
+
+  return {
+    studentsAdded: mergedStudents.length - localStudents.length,
+    incidentsAdded: added,
+    incidentsSkipped: backupIncidents.length - added
+  };
+},
+
+// Hilfsfunktion nur für neues Format (Version 2)
+async _decryptBackupV2(backup, backupPassword) {
+  const salt = new Uint8Array(backup.salt);
+  const backupKey = await deriveKey(backupPassword, salt);
+  const decrypted = await decrypt(new Uint8Array(backup.encrypted), backupKey);
+
+  if (!decrypted.students && !decrypted.incidents) {
+    throw new Error('Ungültiges Backup-Format');
+  }
+
+  return decrypted; // { version, timestamp, students, incidents }
+},
 
 
 // ==================== DELETE INCIDENT ====================

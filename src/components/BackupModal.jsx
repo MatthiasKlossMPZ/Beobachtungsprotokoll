@@ -4,6 +4,7 @@ import { getPasswordChecks, validatePassword } from '../utils/passwordPolicy';
 
 export default function BackupModal({ onClose }) {
   const [mode, setMode] = useState('export'); // 'export' | 'import'
+  const [importMode, setImportMode] = useState('restore'); // 'restore' | 'merge'
   const [backupPassword, setBackupPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -34,11 +35,11 @@ export default function BackupModal({ onClose }) {
 
     try {
       await db.exportBackup(backupPassword);
-      setMessage('✅ Backup erfolgreich heruntergeladen!');
+      setMessage('Backup erfolgreich heruntergeladen!');
       setTimeout(onClose, 1500);
     } catch (err) {
       console.error(err);
-      setMessage('❌ Fehler beim Export: ' + err.message);
+      setMessage('Fehler beim Export: ' + err.message);
     } finally {
       setIsProcessing(false);
     }
@@ -54,7 +55,7 @@ export default function BackupModal({ onClose }) {
       return;
     }
 
-    if (!confirm('⚠️ ACHTUNG: Alle aktuellen Daten werden überschrieben!\n\nWirklich fortfahren?')) {
+    if (!confirm('ACHTUNG: Alle aktuellen Daten werden überschrieben!\n\nWirklich fortfahren?')) {
       return;
     }
 
@@ -66,7 +67,36 @@ export default function BackupModal({ onClose }) {
       // Wird in importBackup bereits neu geladen
     } catch (err) {
       console.error(err);
-      setMessage('❌ Import fehlgeschlagen: ' + err.message);
+      setMessage('Import fehlgeschlagen: ' + err.message);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleMerge = async () => {
+    if (!selectedFile) {
+      setMessage('Bitte eine Backup-Datei auswählen.');
+      return;
+    }
+    if (!backupPassword) {
+      setMessage('Bitte das Backup-Passwort eingeben.');
+      return;
+    }
+
+    setIsProcessing(true);
+    setMessage('');
+
+    try {
+      const result = await db.importMerge(selectedFile, backupPassword);
+      setMessage(
+        `Import abgeschlossen: ${result.incidentsAdded} Protokoll(e) hinzugefügt, ` +
+        `${result.studentsAdded} Schüler neu, ${result.incidentsSkipped} Duplikat(e) übersprungen.`
+      );
+      setTimeout(() => {
+        window.location.reload();
+      }, 2500);
+    } catch (err) {
+      console.error(err);
+      setMessage('Import fehlgeschlagen: ' + err.message);
       setIsProcessing(false);
     }
   };
@@ -154,9 +184,45 @@ export default function BackupModal({ onClose }) {
 
           {mode === 'import' && (
             <div className="space-y-5">
-              <p className="text-amber-600 dark:text-amber-400 font-medium">
-                ⚠️ Alle aktuellen Daten werden ersetzt!
-              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setImportMode('restore');
+                    setMessage('');
+                  }}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium transition ${
+                    importMode === 'restore'
+                      ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  Vollständig wiederherstellen
+                </button>
+                <button
+                  onClick={() => {
+                    setImportMode('merge');
+                    setMessage('');
+                  }}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium transition ${
+                    importMode === 'merge'
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  Protokolle hinzufügen
+                </button>
+              </div>
+
+              {importMode === 'restore' && (
+                <p className="text-amber-600 dark:text-amber-400 font-medium text-sm">
+                  Alle aktuellen Daten werden ersetzt!
+                </p>
+              )}
+              {importMode === 'merge' && (
+                <p className="text-slate-600 dark:text-slate-400 text-sm">
+                  Bestehende Protokolle bleiben erhalten. Neue Protokolle werden hinzugefügt, Duplikate werden übersprungen.
+                </p>
+              )}
 
               <input
                 type="file"
@@ -169,17 +235,28 @@ export default function BackupModal({ onClose }) {
                 type="password"
                 placeholder="Backup-Passwort"
                 value={backupPassword}
-                onInput={(e) => setBackupPassword(e.target.value)}
+                onInput={(e) => {
+                  setBackupPassword(e.target.value);
+                  if (message) setMessage('');
+                }}
                 className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-2xl focus:outline-none focus:border-blue-500"
                 autoComplete="current-password"
               />
 
               <button
-                onClick={handleImport}
+                onClick={importMode === 'restore' ? handleImport : handleMerge}
                 disabled={isProcessing || !selectedFile}
-                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-2xl transition disabled:opacity-70"
+                className={`w-full py-4 text-white font-semibold rounded-2xl transition disabled:opacity-70 ${
+                  importMode === 'restore'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
-                {isProcessing ? 'Wird wiederhergestellt...' : 'Backup einspielen'}
+                {isProcessing
+                  ? 'Wird verarbeitet...'
+                  : importMode === 'restore'
+                    ? 'Backup einspielen'
+                    : 'Protokolle importieren'}
               </button>
             </div>
           )}
