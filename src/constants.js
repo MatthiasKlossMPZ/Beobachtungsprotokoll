@@ -4,7 +4,7 @@ export const VORFALL_CODES = [
   { code: "ER", bedeutung: "Erpressung" },
   { code: "TD", bedeutung: "Tötungsandrohung" },
   { code: "DI", bedeutung: "Diffamierung" },
-  { code: "EX", bedeutung: "Extremistischer Hintergrund" }
+  { code: "EX", bedeutung: "Extremistischer Hintergrund" },
   { code: "VW", bedeutung: "Verweigerung / Ablehnung" }
 ];
 
