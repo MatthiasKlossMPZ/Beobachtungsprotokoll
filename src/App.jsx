@@ -236,7 +236,7 @@ if (showModal) {
       
       <div>
         <h1 className="text-2xl font-bold">Beobachtungsprotokoll</h1>
-        <p className="text-xs text-blue-200 -mt-1">v1.10</p>
+        <p className="text-xs text-blue-200 -mt-1">v1.20</p>
       </div>
     </div>
 

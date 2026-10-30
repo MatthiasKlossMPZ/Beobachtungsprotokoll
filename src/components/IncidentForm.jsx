@@ -275,10 +275,10 @@ const handleCancelConfirm = () => {
   </div>
 </div>
 
-{/* === SCHULBEGLEITER (bereits gut, nur leicht angepasst) === */}
+{/* === SCHULBEGLEITER === */}
 <div className="mb-6">
   <label className="block text-sm font-medium text-slate-700 mb-3">
-    Schulbegleiter-Einsatz
+    Schulbegleiter/UPF-Einsatz
   </label>
   <div className="flex flex-wrap gap-3">
     {SCHULBEGLEITER_CODES.map((item) => (
